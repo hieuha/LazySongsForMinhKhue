@@ -112,4 +112,5 @@ Kho động tác hợp tuổi: vẫy tay · vỗ tay · lắc lư · nhún gối
 - [ ] Không có gì đáng sợ, không nhấp nháy nhanh.
 - [ ] Nhân vật/vật quan trọng không bị thanh lời, thẻ gợi ý, nút che (xem ảnh chụp).
 - [ ] Chữ đang hát không đè chữ bên cạnh.
-- [ ] Đã chụp từng cảnh và không có `pageerror`; đã nhắc người dùng nghe thử âm thanh.
+- [ ] Mở trên điện thoại: chế độ ngang phủ kín màn hình (không viền trống), chế độ dọc thấy rõ nhân vật và hành động của từng cảnh.
+- [ ] Đã chụp từng cảnh (kèm `--phone`) và không có `pageerror`; đã nhắc người dùng nghe thử âm thanh.

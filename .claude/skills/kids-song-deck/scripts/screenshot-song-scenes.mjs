@@ -1,5 +1,6 @@
 // Chụp ảnh từng cảnh của một trang bài hát để kiểm tra hình bằng mắt.
-// Dùng: node screenshot-song-scenes.mjs <song.html> <out-dir> [giây-chờ-trong-cảnh=1.2]
+// Dùng: node screenshot-song-scenes.mjs <song.html> <out-dir> [giây-chờ-trong-cảnh=1.2] [--phone]
+// --phone: chụp thêm mỗi cảnh ở điện thoại ngang (844x390) và chế độ dọc kiểu TikTok (390x844).
 // Cần playwright cài trong thư mục hiện tại (npm i playwright) và trình duyệt Chromium
 // (npx playwright install chromium) — script tìm module từ cwd, không phải từ thư mục skill.
 import { createRequire } from 'node:module';
@@ -25,7 +26,9 @@ async function launchAnyChromium() {
   throw new Error('Không tìm thấy Chromium. Chạy: npx playwright install chromium');
 }
 
-const [, , songArg, outArg, waitArg] = process.argv;
+const args = process.argv.slice(2);
+const phone = args.includes('--phone');
+const [songArg, outArg, waitArg] = args.filter(a => a !== '--phone');
 if (!songArg || !outArg) {
   console.error('Dùng: node screenshot-song-scenes.mjs <song.html> <out-dir> [giây-chờ]');
   process.exit(1);
@@ -43,24 +46,32 @@ const song = resolve(songArg), out = resolve(outArg), wait = Number(waitArg || 1
 mkdirSync(out, { recursive: true });
 
 const browser = await launchAnyChromium();
-const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+const layouts = [['desk', { width: 1280, height: 720 }, false, 'land']];
+if (phone) layouts.push(['phone-land', { width: 844, height: 390 }, true, 'land'],
+                        ['phone-port', { width: 390, height: 844 }, true, 'port']);
 const errors = [];
-page.on('pageerror', e => errors.push(e.message));
-await page.goto('file://' + song);
-await page.waitForTimeout(500);
-await page.screenshot({ path: `${out}/00-idle.png` });
+for (const [tag, viewport, touch, mode] of layouts) {
+  const ctx = await browser.newContext({ viewport, hasTouch: touch, isMobile: touch });
+  await ctx.addInitScript(m => { try { localStorage.setItem('lazysongs-display-mode', m); } catch {} }, mode);
+  const page = await ctx.newPage();
+  page.on('pageerror', e => errors.push(`${tag}: ${e.message}`));
+  await page.goto('file://' + song);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `${out}/${tag}-00-idle.png` });
 
-// Mỗi lần bấm "cảnh sau" nhảy tới đầu cảnh kế tiếp; dừng khi cảnh không đổi nữa
-await page.click('#overlay');
-let prev = '', i = 1;
-for (;;) {
-  await page.waitForTimeout(wait);
-  const scene = await page.$eval('#world', el => el.dataset.scene);
-  if (scene === prev) break;
-  await page.screenshot({ path: `${out}/${String(i).padStart(2, '0')}-${scene}.png` });
-  console.log(`${i}: ${scene}`);
-  prev = scene; i++;
-  await page.click('#btnNext');
+  // Mỗi lần bấm "cảnh sau" nhảy tới đầu cảnh kế tiếp; dừng khi cảnh không đổi nữa
+  await page.click('#overlay');
+  let prev = '', i = 1;
+  for (;;) {
+    await page.waitForTimeout(wait);
+    const scene = await page.$eval('#world', el => el.dataset.scene);
+    if (scene === prev) break;
+    await page.screenshot({ path: `${out}/${tag}-${String(i).padStart(2, '0')}-${scene}.png` });
+    console.log(`${tag} ${i}: ${scene}`);
+    prev = scene; i++;
+    await page.click('#btnNext');
+  }
+  await ctx.close();
 }
 console.log('errors:', JSON.stringify(errors));
 await browser.close();

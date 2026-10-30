@@ -20,13 +20,41 @@
 
   /* sân khấu 16:9 luôn vừa màn hình; mọi kích thước con tính theo cqw */
   .stage{
-    position:relative; width:min(100vw,177.78vh); aspect-ratio:16/9;
-    overflow:hidden; border-radius:18px; container-type:inline-size;
+    position:fixed; inset:0; --u:min(1cqw,1.7778cqh);
+    overflow:hidden; container-type:size;
     user-select:none; -webkit-user-select:none; touch-action:manipulation;
     background:#8ED8FF;
   }
-  @supports (height:100dvh){ .stage{width:min(100vw,177.78dvh)} }
-  :fullscreen .stage{border-radius:0}
+
+  /* Hai chế độ hiển thị (nút điện thoại trên thanh điều khiển, nhớ trong localStorage):
+     NGANG (html.land, mặc định): phủ kín màn hình; nếu màn hình đang dọc thì xoay sân khấu 90°
+       để bé chỉ cần xoay điện thoại ngang (không phụ thuộc khoá xoay của máy).
+     DỌC (html.port, kiểu TikTok): phủ kín màn hình dọc, camera bám theo nhân vật.
+     Camera (viewBox) do JS tính theo tỷ lệ sân khấu nên không bao giờ có viền trống. */
+  @media (orientation: portrait){
+    html.land .stage{inset:auto;left:50%;top:50%;width:100vh;height:100vw;
+                     transform:translate(-50%,-50%) rotate(90deg)}
+    @supports (height:100dvh){ html.land .stage{width:100dvh;height:100dvw} }
+  }
+  @media (orientation: landscape){
+    html.port .stage{inset:0 auto;left:50%;width:56.25vh;transform:translateX(-50%)}
+  }
+  html.port .controls{top:calc(3*var(--u) + env(safe-area-inset-top));right:3cqw;gap:2cqw}
+  html.port .controls button,html.port .controls a{width:11cqw;height:11cqw}
+  html.port .controls svg{width:5.2cqw;height:5.2cqw}
+  html.port .cue{left:3cqw;right:3cqw;top:calc(17cqw + env(safe-area-inset-top));max-width:none;
+                 gap:3cqw;padding:2cqw 4cqw 2cqw 3cqw;border-radius:6cqw}
+  html.port .cue-icon{font-size:10cqw}
+  html.port .cue-text{font-size:5.4cqw}
+  html.port .title{left:4cqw;right:4cqw;top:46cqw;font-size:15cqw;-webkit-text-stroke-width:1.2cqw;text-align:center}
+  html.port .lyrics{left:3cqw;right:3cqw;bottom:calc(4cqw + env(safe-area-inset-bottom));
+                    padding:7cqw 4cqw 3cqw;border-radius:6cqw;font-size:7cqw}
+  html.port .row{white-space:normal}
+  html.port .ball{width:7cqw;height:7cqw;margin:-6.8cqw 0 0 -3.5cqw}
+  html.port .big-play{width:34cqw;height:34cqw}
+  html.port .big-play svg{width:15cqw;height:15cqw}
+  html.port .overlay-label{font-size:7cqw;-webkit-text-stroke-width:.9cqw;text-align:center;padding:0 6cqw}
+  html.port .sparkle{font-size:10cqw}
   .world{position:absolute;inset:0;width:100%;height:100%;display:block}
 
   /* ---------- trạng thái từng cảnh ---------- */
@@ -145,10 +173,10 @@
   @keyframes squish{0%,100%{transform:scale(1.03,.96)}50%{transform:scale(1,1.02)}}
   @keyframes sway{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
   @keyframes sweep{0%,100%{transform:rotate(-22deg)}50%{transform:rotate(22deg)}}
-  @keyframes confetti{from{transform:translateY(-60px) rotate(0)}to{transform:translateY(800px) rotate(540deg)}}
+  @keyframes confetti{from{transform:translateY(0) rotate(0)}to{transform:translateY(1400px) rotate(720deg)}}
   @keyframes rise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-320px);opacity:0}}
   @keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
-  @keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-.6cqw)}}
+  @keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(-.6*var(--u)))}}
   @keyframes pop{0%{transform:scale(.4) rotate(-8deg)}70%{transform:scale(1.08)}100%{transform:none}}
   @keyframes wobble{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg) scale(1.04)}}
   @keyframes ring{from{transform:scale(1);opacity:.7}to{transform:scale(1.6);opacity:0}}
@@ -161,19 +189,19 @@
 
   /* ---------- lớp HTML trên sân khấu ---------- */
   .cue{
-    position:absolute; left:2cqw; top:2cqw; z-index:3; pointer-events:none;
-    display:flex; align-items:center; gap:1.2cqw; max-width:44cqw;
-    padding:.8cqw 2cqw .8cqw 1.2cqw; background:#fff; border-radius:3cqw;
-    box-shadow:0 .5cqw 0 rgba(43,37,64,.18);
+    position:absolute; left:calc(2*var(--u)); top:calc(2*var(--u)); z-index:3; pointer-events:none;
+    display:flex; align-items:center; gap:calc(1.2*var(--u)); max-width:calc(44*var(--u));
+    padding:calc(.8*var(--u)) calc(2*var(--u)) calc(.8*var(--u)) calc(1.2*var(--u)); background:#fff; border-radius:calc(3*var(--u));
+    box-shadow:0 calc(.5*var(--u)) 0 rgba(43,37,64,.18);
   }
   .cue.pop{animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
-  .cue-icon{font-size:4.6cqw;line-height:1;animation:hop var(--beat) ease-in-out infinite;animation-delay:var(--sync)}
-  .cue-text{font-size:2.4cqw;font-weight:800;line-height:1.15;color:var(--ink)}
+  .cue-icon{font-size:calc(4.6*var(--u));line-height:1;animation:hop var(--beat) ease-in-out infinite;animation-delay:var(--sync)}
+  .cue-text{font-size:calc(2.4*var(--u));font-weight:800;line-height:1.15;color:var(--ink)}
 
   .title{
-    position:absolute; left:4cqw; top:12cqw; z-index:5; pointer-events:none;
-    font-size:8cqw; font-weight:800; line-height:1; color:#fff;
-    -webkit-text-stroke:.6cqw var(--ink); paint-order:stroke fill;
+    position:absolute; left:calc(4*var(--u)); top:calc(12*var(--u)); z-index:5; pointer-events:none;
+    font-size:calc(8*var(--u)); font-weight:800; line-height:1; color:#fff;
+    -webkit-text-stroke:calc(.6*var(--u)) var(--ink); paint-order:stroke fill;
     opacity:0; transform:scale(.5) rotate(-8deg);
     transition:opacity .4s, transform .6s cubic-bezier(.34,1.56,.64,1);
   }
@@ -183,44 +211,44 @@
   .title.show span:nth-child(3){animation-delay:-1.6s}
 
   .lyrics{
-    position:absolute; left:3cqw; right:3cqw; bottom:1.6cqw; z-index:3; pointer-events:none;
-    padding:2.8cqw 2cqw 1.1cqw; text-align:center; background:rgba(255,255,255,.93);
-    border-radius:3cqw; box-shadow:0 .6cqw 0 rgba(43,37,64,.2);
-    font-size:3.6cqw; font-weight:800; line-height:1.25; color:#B3A9CF;
+    position:absolute; left:calc(3*var(--u)); right:calc(3*var(--u)); bottom:calc(1.6*var(--u)); z-index:3; pointer-events:none;
+    padding:calc(2.8*var(--u)) calc(2*var(--u)) calc(1.1*var(--u)); text-align:center; background:rgba(255,255,255,.93);
+    border-radius:calc(3*var(--u)); box-shadow:0 calc(.6*var(--u)) 0 rgba(43,37,64,.2);
+    font-size:calc(3.6*var(--u)); font-weight:800; line-height:1.25; color:#B3A9CF;
   }
   .row{white-space:nowrap}
   .syl{display:inline-block;padding:0 .24em;transition:transform .15s,color .15s}
   .syl.done{color:var(--ink)}
   .syl.on{color:var(--pink);transform:translateY(-.1em) scale(1.2)}
-  .ball{position:absolute;left:0;top:0;width:3.4cqw;height:3.4cqw;margin:-3.3cqw 0 0 -1.7cqw}
+  .ball{position:absolute;left:0;top:0;width:calc(3.4*var(--u));height:calc(3.4*var(--u));margin:calc(-3.3*var(--u)) 0 0 calc(-1.7*var(--u))}
   .ball svg{width:100%;height:100%;display:block}
 
-  .controls{position:absolute;right:2cqw;top:2cqw;z-index:6;display:flex;gap:.8cqw}
+  .controls{position:absolute;right:calc(2*var(--u));top:calc(2*var(--u));z-index:6;display:flex;gap:calc(.8*var(--u))}
   .controls button,.controls a{
-    width:5cqw; height:5cqw; border:0; border-radius:50%; padding:0; cursor:pointer;
+    width:calc(5*var(--u)); height:calc(5*var(--u)); border:0; border-radius:50%; padding:0; cursor:pointer;
     display:grid; place-items:center; background:#fff; color:var(--ink);
-    box-shadow:0 .4cqw 0 rgba(43,37,64,.22); transition:transform .15s;
+    box-shadow:0 calc(.4*var(--u)) 0 rgba(43,37,64,.22); transition:transform .15s;
   }
   .controls button:hover{transform:scale(1.08)}
   .controls button:active{transform:scale(.94)}
-  .controls svg{width:2.4cqw;height:2.4cqw;fill:currentColor}
+  .controls svg{width:calc(2.4*var(--u));height:calc(2.4*var(--u));fill:currentColor}
   .controls .main{background:var(--pink);color:#fff}
 
   .overlay{
     position:absolute; inset:0; z-index:4; border:0; padding:0; cursor:pointer;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2cqw;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(2*var(--u));
     background:rgba(43,37,64,.28); font:inherit;
   }
   .overlay[hidden]{display:none}
-  .big-play{position:relative;width:16cqw;height:16cqw;border-radius:50%;background:var(--pink);
-            display:grid;place-items:center;box-shadow:0 1cqw 0 rgba(0,0,0,.2)}
+  .big-play{position:relative;width:calc(16*var(--u));height:calc(16*var(--u));border-radius:50%;background:var(--pink);
+            display:grid;place-items:center;box-shadow:0 calc(1*var(--u)) 0 rgba(0,0,0,.2)}
   .big-play::before,.big-play::after{content:"";position:absolute;inset:0;border-radius:50%;
-            border:.8cqw solid #fff;animation:ring 1.6s ease-out infinite}
+            border:calc(.8*var(--u)) solid #fff;animation:ring 1.6s ease-out infinite}
   .big-play::after{animation-delay:.8s}
-  .big-play svg{width:7cqw;height:7cqw;fill:#fff}
-  .overlay-label{font-size:3.6cqw;font-weight:800;color:#fff;-webkit-text-stroke:.45cqw var(--ink);paint-order:stroke fill}
+  .big-play svg{width:calc(7*var(--u));height:calc(7*var(--u));fill:#fff}
+  .overlay-label{font-size:calc(3.6*var(--u));font-weight:800;color:#fff;-webkit-text-stroke:calc(.45*var(--u)) var(--ink);paint-order:stroke fill}
 
-  .sparkle{position:absolute;z-index:7;pointer-events:none;font-size:4.5cqw;
+  .sparkle{position:absolute;z-index:7;pointer-events:none;font-size:calc(4.5*var(--u));
            animation:sparkle .9s ease-out forwards}
 
   /* ---------- hướng dẫn cho bố mẹ ---------- */
@@ -276,7 +304,7 @@
       </symbol>
     </defs>
 
-    <rect id="sky" width="1280" height="720"/>
+    <rect id="sky" x="-700" y="-1300" width="2680" height="2200"/>
 
     <!-- đèn sân khấu khi nhảy -->
     <g id="beams">
@@ -333,8 +361,8 @@
       <ellipse cx="44" cy="16" rx="10" ry="6" fill="#B9C2DA"/>
     </g>
 
-    <path id="hills" d="M0 470 Q210 380 430 460 T860 450 T1280 430 V720 H0 Z"/>
-    <rect id="ground" y="540" width="1280" height="180"/>
+    <path id="hills" d="M-700 450 Q-350 390 0 470 Q210 380 430 460 T860 450 T1280 430 T1980 445 V2200 H-700 Z"/>
+    <rect id="ground" x="-700" y="540" width="2680" height="1700"/>
 
     <ellipse class="puddle" cx="540" cy="548" rx="70" ry="12" fill="#6FC3FF"/>
     <ellipse class="puddle" cx="1080" cy="550" rx="60" ry="11" fill="#6FC3FF"/>
@@ -356,6 +384,10 @@
     </g>
 
     <g>
+      <g class="flower beat"><use href="#flower" x="-200" y="474" width="56" height="78" color="#FF9F43"/></g>
+      <g class="flower beat"><use href="#flower" x="-90"  y="482" width="52" height="70" color="#FF5A5A"/></g>
+      <g class="flower beat"><use href="#flower" x="1300" y="474" width="56" height="78" color="#FF9F43"/></g>
+      <g class="flower beat"><use href="#flower" x="1400" y="482" width="52" height="70" color="#5BD66B"/></g>
       <g class="flower beat"><use href="#flower" x="60"   y="470" width="60" height="82" color="#FF7AB6"/></g>
       <g class="flower beat"><use href="#flower" x="150"  y="482" width="52" height="70" color="#B98CFF"/></g>
       <g class="flower beat"><use href="#flower" x="250"  y="470" width="60" height="82" color="#FF9F43"/></g>
@@ -447,6 +479,7 @@
     <button id="btnPlay" class="main" aria-label="Phát / tạm dừng"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
     <button id="btnNext" aria-label="Cảnh sau"><svg viewBox="0 0 24 24"><path d="M15.5 5H18v14h-2.5zM4 5v14l10.5-7z"/></svg></button>
     <button id="btnFull" aria-label="Toàn màn hình"><svg viewBox="0 0 24 24"><path d="M4 4h6v2.5H6.5V10H4zm10 0h6v6h-2.5V6.5H14zM4 14h2.5v3.5H10V20H4zm13.5 0H20v6h-6v-2.5h3.5z"/></svg></button>
+    <button id="btnMode" aria-label="Đổi màn ngang / dọc"><svg viewBox="0 0 24 24" id="modeIcon"></svg></button>
     <button id="btnGuide" aria-label="Lời bài hát và động tác"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm1.2 14h-2.4v-6.5h2.4zm-1.2-8.2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></button>
   </div>
 
@@ -693,7 +726,59 @@
     state = 'ended';
     syncUi();
   }
+  /* ================= CHẾ ĐỘ NGANG / DỌC ================= */
+  const MODE_KEY = 'lazysongs-display-mode';
+  const isTouch = matchMedia('(pointer: coarse)').matches;
+  const isPortraitScreen = () => matchMedia('(orientation: portrait)').matches;
+  let mode = 'land';
+  try { if (localStorage.getItem(MODE_KEY) === 'port') mode = 'port'; } catch {}
+  const ICON_PORT = 'M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 3v14h8V5z';
+  const ICON_LAND = 'M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm3 0v8h14V8z';
+  function applyMode() {
+    document.documentElement.classList.toggle('port', mode === 'port');
+    document.documentElement.classList.toggle('land', mode === 'land');
+    $('modeIcon').innerHTML = `<path d="${mode === 'port' ? ICON_LAND : ICON_PORT}"/>`;   // icon = chế độ sẽ chuyển sang
+  }
+  function lockOrientation() {
+    try { screen.orientation.lock(mode === 'port' ? 'portrait' : 'landscape').catch(() => {}); } catch {}
+  }
+  // Điện thoại/máy tính bảng: khi bắt đầu hát thì vào toàn màn hình và khoá hướng (Android);
+  // iPhone không hỗ trợ thì CSS tự xoay sân khấu.
+  function enterImmersive() {
+    if (!isTouch) return;
+    const d = document, el = d.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (d.fullscreenElement || d.webkitFullscreenElement || !req) { lockOrientation(); return; }
+    try { Promise.resolve(req.call(el)).then(lockOrientation, () => {}); } catch {}
+  }
+  function setMode(m) {
+    mode = m;
+    try { localStorage.setItem(MODE_KEY, m); } catch {}
+    applyMode();
+    if (document.fullscreenElement || document.webkitFullscreenElement) lockOrientation();
+  }
+
+  // Camera: viewBox luôn khớp đúng tỷ lệ sân khấu nên không có viền trống.
+  // Ngang: giữ nguyên chiều cao 720 và mở rộng sang hai bên (hoặc mở thêm trời phía trên nếu màn hình vuông hơn 16:9).
+  // Dọc: khung hẹp 520 đơn vị, trượt theo nhân vật.
+  const cam = { x: 640 };
+  function updateCamera(dt) {
+    const a = stage.clientWidth / Math.max(1, stage.clientHeight);
+    let W, H, x0, y0;
+    if (mode === 'port') {
+      W = 520; H = W / a;
+      cam.x += (disp.x - cam.x) * (1 - Math.exp(-dt * 3));
+      x0 = Math.max(0, Math.min(1280 - W, cam.x - W / 2));
+      y0 = 560 - .84 * H;                               // mặt đất sát trên thanh lời
+    } else if (a >= 16 / 9) {
+      H = 720; W = H * a; x0 = 640 - W / 2; y0 = 0;
+    } else {
+      W = 1280; H = W / a; x0 = 0; y0 = 560 - .78 * H;
+    }
+    world.setAttribute('viewBox', `${x0.toFixed(1)} ${y0.toFixed(1)} ${W.toFixed(1)} ${H.toFixed(1)}`);
+  }
+
   function toggle() {
+    if (state !== 'playing') enterImmersive();
     if (state === 'playing') pause();
     else play(state === 'paused' ? pausedAt : 0);
   }
@@ -780,7 +865,7 @@
     });
     // quả bóng nhện nhảy từ chữ đang hát sang chữ kế tiếp, chạm đúng lúc chữ đó bắt đầu
     const c = i => ({ x: L.els[i].offsetLeft + L.els[i].offsetWidth / 2, y: L.els[i].offsetTop });
-    const h = stage.clientWidth * .028;
+    const h = Math.min(stage.clientWidth, stage.clientHeight * 16 / 9) * (mode === 'port' ? .05 : .028);
     let x, y;
     if (idx < 0) {
       const p = c(0);
@@ -894,10 +979,10 @@
     const p = (r, d) => `${(Math.cos(a + d) * r).toFixed(1)},${(Math.sin(a + d) * r).toFixed(1)}`;
     mk('polygon', { points: `${p(70, -w)} ${p(420, -w * 1.6)} ${p(420, w * 1.6)} ${p(70, w)}` }, $('glowRays'));
   }
-  for (let i = 0; i < 26; i++) {                       // sao lấp lánh rải khắp bầu trời
+  for (let i = 0; i < 40; i++) {                       // sao lấp lánh rải khắp bầu trời
     const s = 14 + (i % 4) * 7;
     // vị trí đặt ở nhóm cha vì transform CSS của .tw ghi đè thuộc tính transform
-    const at = mk('g', { transform: `translate(${60 + (i * 211) % 1180} ${40 + (i * 137) % 440})` }, $('twinkles'));
+    const at = mk('g', { transform: `translate(${-240 + (i * 211) % 1760} ${-320 + (i * 137) % 800})` }, $('twinkles'));
     const tw = mk('path', {
       d: `M0 ${-s} Q${s * .18} ${-s * .18} ${s} 0 Q${s * .18} ${s * .18} 0 ${s} Q${-s * .18} ${s * .18} ${-s} 0 Q${-s * .18} ${-s * .18} 0 ${-s}Z`,
       fill: i % 3 ? '#FFFFFF' : '#FFE066', class: 'tw',
@@ -905,10 +990,10 @@
     tw.style.animationDelay = `${-((i * .29) % 1.6).toFixed(2)}s`;
   }
   const COLORS = ['#FF5A5A', '#FF9F43', '#FFD23F', '#5BD66B', '#4FB3FF', '#B98CFF', '#FF7AB6'];
-  for (let i = 0; i < 40; i++) {
-    const c = mk('rect', { x: (i * 97) % 1280, y: -30, width: 12, height: 20, rx: 3, fill: COLORS[i % COLORS.length], class:'cf' }, $('confetti'));
+  for (let i = 0; i < 56; i++) {
+    const c = mk('rect', { x: -320 + (i * 97) % 1920, y: -520, width: 12, height: 20, rx: 3, fill: COLORS[i % COLORS.length], class:'cf' }, $('confetti'));
     c.style.animationDelay = `${-((i * .37) % 4).toFixed(2)}s`;
-    c.style.animationDuration = `${3 + (i % 5) * .5}s`;
+    c.style.animationDuration = `${5 + (i % 5) * .8}s`;
   }
   ['♪', '♫', '♪', '♬', '♫', '♪', '♬', '♪'].forEach((n, i) => {
     const el = mk('text', { x: 90 + i * 150, y: 600, fill: COLORS[(i * 3) % COLORS.length], class:'note-f' }, $('notes'));
@@ -928,8 +1013,10 @@
     const sp = document.createElement('span');
     sp.className = 'sparkle';
     sp.textContent = SPARKS[Math.floor(Math.random() * SPARKS.length)];
-    sp.style.left = `${e.clientX - r.left}px`;
-    sp.style.top = `${e.clientY - r.top}px`;
+    // sân khấu đang xoay 90° (chế độ ngang trên màn dọc) → đổi toạ độ chạm về hệ của sân khấu
+    const turned = mode === 'land' && isPortraitScreen();
+    sp.style.left = `${turned ? e.clientY - r.top : e.clientX - r.left}px`;
+    sp.style.top = `${turned ? r.right - e.clientX : e.clientY - r.top}px`;
     sp.addEventListener('animationend', () => sp.remove());
     stage.appendChild(sp);
   });
@@ -945,6 +1032,7 @@
   $('btnPrev').addEventListener('click', () => jump(-1));
   $('btnNext').addEventListener('click', () => jump(1));
   $('btnFull').addEventListener('click', toggleFull);
+  $('btnMode').addEventListener('click', () => setMode(mode === 'port' ? 'land' : 'port'));
   $('btnGuide').addEventListener('click', () => $('guide').showModal());
   $('guideClose').addEventListener('click', () => $('guide').close());
 
@@ -976,8 +1064,10 @@
     const clock = state === 'playing' ? t : ts / 1000;   // khi dừng, nhện vẫn nhún tại chỗ
     drawLyrics(L, state === 'idle' ? -1 : t, clock);
     drawSpider(L, t, clock, dt);
+    updateCamera(dt);
     requestAnimationFrame(frame);
   }
+  applyMode();
   syncUi();
   requestAnimationFrame(frame);
 })();

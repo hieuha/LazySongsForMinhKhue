@@ -6,7 +6,8 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 
 | Mục | Loại | Ghi chú |
 |---|---|---|
-| `:root`, `.stage`, `.world` | GIỮ | Sân khấu 16:9, mọi kích thước con theo `cqw` |
+| `:root`, `.stage`, `.world` | GIỮ | Sân khấu luôn phủ kín màn hình (`position:fixed`, `container-type:size`). Kích thước lớp phủ dùng `calc(N*var(--u))`, với `--u = min(1cqw, 1.7778cqh)` = 1% của khung 16:9 lớn nhất vừa sân khấu |
+| Khối chế độ hiển thị (`html.land` / `html.port`) | GIỮ | NGANG: phủ kín; màn dọc thì xoay sân khấu 90°. DỌC (TikTok): phủ kín màn dọc, các override `html.port …` dùng `cqw` (theo bề ngang) |
 | `/* ---------- trạng thái từng cảnh ---------- */` | THAY | Mỗi cảnh = `.world[data-scene=<tên>] #id{...}`: màu trời/đất, vị trí mặt trời/mây, hiện/ẩn mưa, cầu vồng, sao lấp lánh… Dùng `transition` để cảnh đổi mượt |
 | hiệu ứng riêng (`#alarm`, `#sunGlow`, `#twinkles`…) | THAY | Thêm/bớt theo bài |
 | `/* ---------- nét mặt ... ---------- */` | THAY/GIỮ | Cơ chế `data-mood` (smile, grin, wow, happy) giữ được cho nhân vật mới |
@@ -23,6 +24,7 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
   Gốc toạ độ nhân vật ở tâm thân, thân bán kính ~50.
 - `#bubble` ("Hihi!" khi chạm): GIỮ.
 - Nhóm sinh bằng JS (`#rain`, `#twinkles`, `#notes`, `#confetti`): GIỮ nếu dùng.
+- **Thế giới vẽ tràn ra ngoài 1280×720** để camera cắt khung nào cũng kín: trời `x -700…1980, y -1300…900`, đồi/đất kéo tới `x -700…1980` và xuống `y 2200`, thêm hoa ở `x < 0` và `x > 1280`. Hoa giấy/sao lấp lánh rải trên vùng rộng đó. Nội dung *quan trọng* vẫn đặt trong 0…1280 × 0…720.
 
 ## JS (`<script>`)
 
@@ -34,7 +36,8 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 | `CẢNH + LỜI KARAOKE` | GIỮ | Chỉ sửa chuỗi tiêu đề mở đầu/kết trong `showLine` |
 | `CHÚ NHỆN` → `pose()` | THAY | Mỗi cảnh trả `{x, y, r, s, sq, leg, lx, ly, mood}`. `lb` = số phách từ đầu câu (dùng cho chuyển động theo lời), `bp` = phách tổng (nhún nhảy), `hop`/`sway` = sóng theo phách. Nhân vật được làm mượt khi đổi cảnh |
 | `TRANG TRÍ SINH BẰNG JS` | THAY/GIỮ | |
-| `TƯƠNG TÁC`, `VÒNG LẶP` | GIỮ | |
+| `CHẾ ĐỘ NGANG / DỌC` | GIỮ | `mode` lưu ở localStorage `lazysongs-display-mode` (chung mọi bài); nút `#btnMode`; khi bấm phát trên máy cảm ứng: vào toàn màn hình + `screen.orientation.lock` (Android), iPhone dùng xoay CSS. `updateCamera()` đặt `viewBox` theo tỷ lệ sân khấu: ngang rộng hơn 16:9 → giữ cao 720, mở rộng hai bên; vuông hơn → mở thêm trời; dọc → khung rộng 520 bám theo `disp.x` của nhân vật, mặt đất ở 84% chiều cao |
+| `TƯƠNG TÁC`, `VÒNG LẶP` | GIỮ | Toạ độ chạm đã đổi về hệ sân khấu khi sân khấu đang xoay 90° |
 
 ## Định dạng dữ liệu câu hát
 
@@ -50,7 +53,9 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 - Kiểm tra: `pick + tổng độ dài ≤ len` và không chồng lên `pick` của câu kế.
 - Với 4/4: đặt `BEAT = 2 * E` hoặc đổi E thành móc đơn 4/4, sửa `b % 2` trong vòng dựng sự kiện cho đúng phách mạnh, và `chords` = `len / (BEAT/E)` hợp âm.
 
-## Toạ độ (viewBox 1280×720)
+## Toạ độ (thế giới chuẩn 1280×720)
 
 - Mặt đất y = 540; nhân vật đứng trên cỏ ở y ≈ 470 (scale 1).
-- Thanh lời che y > ~548; thẻ gợi ý: x < 460, y < 110; nút: x > 880, y < 95.
+- Ngang 16:9: thanh lời che y > ~548; thẻ gợi ý: x < 460, y < 110; nút: x > 860, y < 95.
+- Dọc: camera chỉ thấy ~520 đơn vị bề ngang quanh nhân vật → hành động chính của mỗi cảnh phải xảy ra gần nhân vật (≤ ±260 theo x); vật ở xa (mặt trời góc phải…) sẽ ra ngoài khung, nên cảnh nào cần thấy vật đó thì đưa nó lại gần nhân vật (như mặt trời bay tới x 330 ở cảnh nắng).
+- Cảnh nhân vật di chuyển xa (trôi đi, đi về nhà) thì camera dọc trượt theo — giữ quãng đường ≤ ~450 đơn vị cho dễ nhìn.

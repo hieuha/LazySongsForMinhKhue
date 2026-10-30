@@ -47,11 +47,12 @@ Yêu cầu bảng phải đạt:
 - Vẽ bản mini của nhân vật cho `#mini` (quả bóng karaoke).
 - Bối cảnh màu phẳng tươi, viền đậm, đồ vật có mặt cười, ≤ ~6 vật chính mỗi cảnh. Nền đổi màu theo cảnh (guide mục 5).
 - Giữ vùng an toàn: nhân vật & vật quan trọng trong y 150–540 (viewBox 1280×720); thanh lời phía dưới, thẻ gợi ý trên trái, nút trên phải.
+- **Hai chế độ hiển thị** (giữ nguyên từ khuôn mẫu): NGANG phủ kín màn hình (mặc định, tự vào toàn màn hình và xoay ngang khi mở trên điện thoại) và DỌC kiểu TikTok (camera bám nhân vật). Vì vậy: vẽ nền tràn ra ngoài khung 1280×720 (xem anatomy) và đặt hành động mỗi cảnh gần nhân vật để khung dọc hẹp vẫn thấy đủ.
 
 ### 5. Dựng trang
 1. Sao chép khuôn mẫu sang `songs/<số tiếp theo>.<ten-bai-khong-dau>.html` (số = `no` lớn nhất trong `songs/songs.js` + 1).
 2. Thay theo `references/song-engine-anatomy.md`: `<title>`, dữ liệu bài hát, `SCENES`, CSS trạng thái cảnh, SVG thế giới & nhân vật, hàm `pose()` (mỗi cảnh một chuyển động bám theo `lb`/phách), tiêu đề mở đầu/kết trong `showLine`, hộp hướng dẫn cho bố mẹ (lời + động tác + mẹo).
-3. Giữ nguyên engine âm thanh, lập lịch, karaoke, tương tác, nút 🏠 về `../index.html`.
+3. Giữ nguyên engine âm thanh, lập lịch, karaoke, tương tác, chế độ ngang/dọc + camera, nút 🏠 về `../index.html`.
 
 ### 6. Đăng ký vào thư viện
 - Thêm mục vào `songs/songs.js`: `no`, `title`, `file`, `emoji` (biểu tượng nhân vật), `color` (màu chủ đạo của bài), `duration`, `tags` (tái sử dụng tag có sẵn: con vật, thời tiết, vận động…), `desc` (1 câu kể chuyện).
@@ -61,8 +62,8 @@ Yêu cầu bảng phải đạt:
 1. Cú pháp: trích `<script>` ra file tạm rồi `node --check`.
 2. Chụp từng cảnh (chạy trong thư mục có `playwright`, vd thư mục scratchpad: `npm i playwright`):
    `node <repo>/.claude/skills/kids-song-deck/scripts/screenshot-song-scenes.mjs <repo>/songs/<file>.html <out-dir> [giây-chờ]`
-   Script tự tìm Chromium (bản khớp playwright → Google Chrome → cache `ms-playwright`).
-3. **Đọc từng ảnh** và đối chiếu checklist (guide mục 11): hình khớp câu, nhân vật không bị che, chữ không đè nhau, mood đúng, `errors: []`. Sửa và chụp lại tới khi đạt.
+   Script tự tìm Chromium (bản khớp playwright → Google Chrome → cache `ms-playwright`). Thêm `--phone` để chụp thêm từng cảnh ở điện thoại ngang (844×390) và chế độ dọc (390×844).
+3. **Đọc từng ảnh** (cả bộ `--phone`) và đối chiếu checklist (guide mục 11): hình khớp câu, nhân vật không bị che, chữ không đè nhau, mood đúng, không có viền trống/khoảng nền bị hụt khi ngang rộng, khung dọc vẫn thấy hành động chính, `errors: []`. Sửa và chụp lại tới khi đạt.
 4. Mở `index.html`: thẻ bài mới hiện, bấm vào được, nút 🏠 quay về được.
 5. Âm thanh không kiểm tra tự động được → nói rõ người dùng cần nghe thử trên máy thật.
 
@@ -76,4 +77,7 @@ Yêu cầu bảng phải đạt:
 - `.syl` cần `padding` ≥ .24em và `.syl.on` scale ≤ 1.2, nếu không chữ đang hát đè chữ bên cạnh.
 - `<use href="#symbol">` trong `<svg>` HTML nhỏ phải có `x y width height` tường minh, nếu không bị co nhỏ.
 - Câu có `pick` âm → câu trước phải chừa đủ móc đơn nghỉ ở cuối, nếu không hai nốt chồng nhau.
+- Nền chỉ vẽ trong 0…1280 → điện thoại ngang (tỷ lệ ~2.16:1) hở hai bên. Luôn vẽ trời/đồi/đất tràn rộng.
+- Lớp phủ HTML dùng `calc(N*var(--u))`, không dùng `cqw` trần (chữ sẽ phình to trên màn ngang rộng); riêng override `html.port` dùng `cqw`.
+- Khi sân khấu bị xoay 90°, toạ độ chuột/chạm phải đổi hệ (đã có trong `pointerdown`); vị trí karaoke dùng `offsetLeft/offsetTop` nên không bị ảnh hưởng.
 - Giữ file tự chứa: không thêm file âm thanh/ảnh ngoài; font Baloo 2 từ Google Fonts có font dự phòng khi offline.
