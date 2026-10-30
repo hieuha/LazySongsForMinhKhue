@@ -28,6 +28,7 @@ songs/
 |---|---|---|
 | 1 | 🕷️ [Chú Nhện Đen](songs/1.chu-nhen-den-bo-tren-mai-nha.html) | Nhện leo mái nhà, gặp mưa, gặp nắng rồi lại leo lên — giai điệu *Itsy Bitsy Spider* |
 | 2 | 🐵 [Năm Chú Khỉ Con](songs/2.nam-chu-khi-con-nhay-tren-giuong.html) | Đếm lùi 5 → 1: khỉ nhảy trên giường, ngã u đầu, mẹ gọi bác sĩ, cả nhà đi ngủ — giai điệu *Five Little Monkeys* |
+| 3 | ⭐ [Twinkle Twinkle Little Star](songs/3.twinkle-twinkle-little-star.html) | Lời tiếng Anh: ngôi sao nhỏ và bạn Cú, ngân "mm", chúc ngủ ngon |
 
 ## Thêm bài hát mới
 

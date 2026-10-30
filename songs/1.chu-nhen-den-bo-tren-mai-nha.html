@@ -243,6 +243,9 @@
   .syl{display:inline-block;padding:0 .24em;transition:transform .15s,color .15s}
   .syl.done{color:var(--ink)}
   .syl.on{color:var(--pink);transform:translateY(-.1em) scale(1.2)}
+  /* âm tiết trong cùng một từ ("Twin-" + "kle"): viết liền, phóng nhẹ hơn để không đè nhau */
+  .syl.join{padding-right:0} .syl.cont{padding-left:0}
+  .syl.on.join,.syl.on.cont{transform:translateY(-.1em) scale(1.08)}
   .ball{position:absolute;left:0;top:0;width:calc(3.4*var(--u));height:calc(3.4*var(--u));margin:calc(-3.3*var(--u)) 0 0 calc(-1.7*var(--u))}
   .ball svg{width:100%;height:100%;display:block}
 
@@ -910,6 +913,7 @@
     let row = document.createElement('div');
     row.className = 'row';
     rowsEl.appendChild(row);
+    let prevJoined = false;
     L.els = L.syl.map(s => {
       if (s.br) {
         row = document.createElement('div');
@@ -918,7 +922,12 @@
       }
       const span = document.createElement('span');
       span.className = 'syl';
-      span.textContent = s.text;
+      // chữ kết thúc bằng "-" = nối với âm tiết sau thành một từ (lời tiếng Anh: "Twin-", "kle,")
+      const joined = s.text.endsWith('-');
+      span.textContent = joined ? s.text.slice(0, -1) : s.text;
+      span.classList.toggle('join', joined);
+      span.classList.toggle('cont', prevJoined && !s.br);
+      prevJoined = joined;
       row.appendChild(span);
       return span;
     });

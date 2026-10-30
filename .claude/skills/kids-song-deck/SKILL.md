@@ -15,6 +15,7 @@ Biến một bài hát thiếu nhi thành trang `songs/<số>.<ten-bai>.html` đ
 | `references/song-engine-anatomy.md` | Khi dựng file: phần nào của khuôn mẫu giữ, phần nào thay; định dạng dữ liệu câu hát; chế độ hiển thị & camera; toạ độ an toàn |
 | `songs/1.chu-nhen-den-bo-tren-mai-nha.html` | **Khuôn mẫu chuẩn.** Luôn sao chép file này; không viết engine từ đầu |
 | `songs/2.nam-chu-khi-con-nhay-tren-giuong.html` | Ví dụ bài 4/4, **nhiều nhân vật** nhân bản từ một khuôn, cảnh trong nhà, kết ru ngủ (`soft`) |
+| `songs/3.twinkle-twinkle-little-star.html` | Ví dụ **lời tiếng Anh** (âm tiết nối `Twin-`), 2 nhân vật (sao bay + Cú), đoạn ngân "mm", lượt 2 `soft` |
 | `songs/covers/*.svg` | Ví dụ ảnh bìa vẽ từ nhân vật trong bài |
 | `scripts/screenshot-song-scenes.mjs` | Bước kiểm tra: chụp ảnh từng cảnh (máy tính + điện thoại) |
 
@@ -44,6 +45,8 @@ README.md            Có bảng "Danh sách bài hát"
 
 ### 1. Lời bài hát
 - Dùng **đúng** lời người dùng đưa, giữ chính tả tiếng Việt có dấu. Mỗi dòng lời = một slide.
+- Người dùng muốn **lời tiếng Anh** → giữ lời gốc tiếng Anh (bài dân gian/public domain), tách âm tiết theo nốt, từ nhiều âm tiết viết `'Twin-','kle,'` (dấu `-` cuối = nối liền); thẻ động tác + hướng dẫn bố mẹ vẫn tiếng Việt, hộp hướng dẫn kèm nghĩa tiếng Việt từng câu.
+- Link YouTube chỉ đọc được tiêu đề + mô tả (lấy qua oEmbed và trang watch), **không xem được hình** → nói rõ với người dùng, kiểm tra video có đúng bài không trước khi làm.
 - Chỉ có tên bài → đề xuất lời quen thuộc phổ biến, hỏi xác nhận trước khi làm.
 - Từ ngữ đáng sợ/không hợp tuổi → báo và đề xuất thay, không tự sửa.
 - Người dùng gửi thêm yêu cầu hiệu ứng giữa chừng → làm luôn rồi chụp kiểm tra lại cảnh đó.

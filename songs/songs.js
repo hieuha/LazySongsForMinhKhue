@@ -25,4 +25,15 @@ window.SONGS = [
     tags: ['con vật', 'đếm số', 'vận động', 'đi ngủ'],
     desc: 'Năm chú khỉ nhảy trên giường, lần lượt ngã u đầu, mẹ gọi bác sĩ rồi cả nhà đi ngủ.',
   },
+  {
+    no: 3,
+    title: 'Twinkle Twinkle Little Star',
+    file: 'songs/3.twinkle-twinkle-little-star.html',
+    cover: 'songs/covers/3.twinkle-twinkle-little-star.svg',
+    emoji: '⭐',
+    color: '#3A3480',
+    duration: '1 phút 35',
+    tags: ['tiếng Anh', 'đi ngủ', 'thiên nhiên'],
+    desc: 'Ngôi sao nhỏ lấp lánh, bạn Cú tò mò ngắm sao rồi cả hai chúc nhau ngủ ngon.',
+  },
 ];

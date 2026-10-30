@@ -48,7 +48,7 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
   syl:[['Chợt','E5',2],['một','E5',1],['cơn','F5',2],['mưa','G5',6]] }
 ```
 
-- `syl`: `[chữ, nốt | 'tick' | 'clap', độ dài móc đơn]`; chữ bắt đầu bằng `/` = xuống dòng (dùng cho câu dài).
+- `syl`: `[chữ, nốt | 'tick' | 'clap', độ dài móc đơn]`; chữ bắt đầu bằng `/` = xuống dòng (dùng cho câu dài); chữ **kết thúc bằng `-`** = nối liền với âm tiết sau thành một từ (lời tiếng Anh: `'Twin-','kle,'` hiện "Twinkle,"), engine bỏ khoảng cách và phóng nhẹ hơn.
 - `pick`: âm tiết đầu bắt đầu sớm `|pick|` móc đơn (nốt lấy đà).
 - `len`: mặc định `LINE` (12 = 2 ô nhịp 6/8). Đoạn mở đầu/nhảy/kết thường `len:24`.
 - `chords`: mỗi phách một hợp âm (số hợp âm = `len / (BEAT/E)`). Phách chẵn có kick + pad, phách lẻ có clap nhẹ; shaker mỗi móc đơn, nhấn ở đầu phách (`STEP = BEAT/E`).
@@ -63,7 +63,7 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 - Nét mặt theo `data-mood` trên từng bản sao; trạng thái phụ (`bumped`, `healed`) bằng class.
 - Một hàm tư thế `pose(i, L, lb, bp, clock)` trả `{x, feet, s, lift, r, arm, mood, …}`; vòng vẽ làm mượt x/feet/s, đặt bóng đổ, ghép transform. Các nhân vật nhảy lệch nhau 1/4 phách cho vui mắt.
 - Camera dọc: đặt `disp.x` cố định vào giữa nhóm (engine đọc `disp.x`).
-- Mỗi bản sao có vùng chạm riêng (`.mk-hit`) → nhân vật đó nhảy lộn + "Hihi!".
+- Mỗi bản sao có vùng chạm riêng (`.mk-hit`) → nhân vật đó nhảy lộn + "Hihi!". Bong bóng chữ dùng chung (`#bubble`) — đổi `#bubbleText` theo nhân vật được chạm (vd sao "Hihi!", Cú "Hu hu!").
 
 ## Ảnh bìa
 
