@@ -57,6 +57,18 @@
   html.port .big-play svg{width:15cqw;height:15cqw}
   html.port .overlay-label{font-size:7cqw;-webkit-text-stroke-width:.9cqw;text-align:center;padding:0 6cqw}
   html.port .sparkle{font-size:10cqw}
+
+  /* Chừa chỗ cho tai thỏ / Dynamic Island.
+     Ngang (máy tự xoay): tai thỏ nằm cạnh trái/phải → lùi thẻ, nút, thanh lời theo safe-area hai bên.
+     Dọc trên điện thoại: thẻ chỉ dẫn luôn cách mép trên ≥ 56px (Island cao ~54px), kể cả khi
+     trình duyệt không báo safe-area-inset-top. */
+  html.land .cue{left:calc(2*var(--u) + env(safe-area-inset-left))}
+  html.land .controls{right:calc(2*var(--u) + env(safe-area-inset-right))}
+  html.land .lyrics{left:calc(3*var(--u) + env(safe-area-inset-left));right:calc(3*var(--u) + env(safe-area-inset-right))}
+  @media (pointer: coarse){
+    html.port .cue{top:max(calc(3cqw + env(safe-area-inset-top)), 56px)}
+    html.port .title{top:calc(24cqw + 56px)}
+  }
   .world{position:absolute;inset:0;width:100%;height:100%;display:block}
 
   /* ---------- trạng thái từng cảnh ---------- */

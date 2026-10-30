@@ -34,6 +34,7 @@ README.md            Có bảng "Danh sách bài hát"
 - Có khoảnh khắc cảm xúc phóng đại theo lời (vd nhện **giật mình** khi mưa tới) và phần thưởng thị giác (vd **cầu vồng** khi tạnh, **muôn ngàn tia nắng lấp lánh**).
 - Mở trên điện thoại: **mặc định NGANG phủ kín màn hình** (không viền trống hai bên, tự vào toàn màn hình/xoay ngang); có nút đổi sang **DỌC kiểu TikTok**, ở chế độ dọc **các nút nằm dưới đáy** để không che hình.
 - Lời 1 hay 2 dòng đều **không được che nhân vật** — engine tự xử lý, không chỉnh tay từng bài.
+- Không thứ gì bị **tai thỏ / Dynamic Island** che: ở chế độ dọc trên điện thoại thẻ chỉ dẫn luôn cách mép trên ≥ 56px; khi điện thoại quay ngang thì thẻ, nút, thanh lời lùi vào theo `env(safe-area-inset-left/right)`. Engine đã có sẵn (cần `viewport-fit=cover` trong thẻ meta viewport).
 
 ## Quy trình
 
@@ -108,4 +109,5 @@ Yêu cầu bảng phải đạt:
 - Khi sân khấu bị xoay 90°, toạ độ chuột/chạm phải đổi hệ (đã có trong `pointerdown`); vị trí karaoke dùng `offsetLeft/offsetTop` nên không bị ảnh hưởng.
 - `const` khai báo sau hàm vẫn dùng được trong hàm miễn là hàm chỉ chạy sau (vòng `frame` khởi động cuối script) — giữ `requestAnimationFrame(frame)` ở cuối.
 - Playwright cài mới có thể đòi bản Chromium khác bản trong cache → script đã tự dò; đừng tải lại trình duyệt nếu không cần.
+- `env(safe-area-inset-top)` thường bằng 0 trong Safari/Chrome thường (thanh trình duyệt đã chiếm chỗ) nhưng Island vẫn có thể đè khi toàn màn hình → dùng `max(…, 56px)` trên thiết bị cảm ứng thay vì chỉ tin vào safe-area.
 - Giữ file tự chứa: không thêm file âm thanh/ảnh ngoài; font Baloo 2 từ Google Fonts có font dự phòng khi offline.

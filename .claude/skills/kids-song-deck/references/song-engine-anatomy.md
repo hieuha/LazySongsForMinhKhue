@@ -12,7 +12,7 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 | hiệu ứng riêng (`#alarm`, `#sunGlow`, `#twinkles`…) | THAY | Thêm/bớt theo bài |
 | `/* ---------- nét mặt ... ---------- */` | THAY/GIỮ | Cơ chế `data-mood` (smile, grin, wow, happy) giữ được cho nhân vật mới |
 | `/* ---------- keyframes ---------- */` | GIỮ, thêm | Animation theo phách dùng `var(--beat)` + `animation-delay: var(--sync)` và có class `beat` để tự khớp nhịp khi tua |
-| `/* ---------- lớp HTML trên sân khấu ---------- */` | GIỮ | Thẻ gợi ý (ngang: trên trái; dọc: sát mép trên, rộng hết), tiêu đề, thanh lời karaoke (dọc: tự xuống dòng), nút (ngang: trên phải; **dọc: hàng dưới đáy**, dưới thanh lời), lớp phủ nút phát. Các vị trí có cộng `env(safe-area-inset-*)` cho tai thỏ/thanh home |
+| `/* ---------- lớp HTML trên sân khấu ---------- */` | GIỮ | Thẻ gợi ý (ngang: trên trái; dọc: sát mép trên, rộng hết), tiêu đề, thanh lời karaoke (dọc: tự xuống dòng), nút (ngang: trên phải; **dọc: hàng dưới đáy**, dưới thanh lời), lớp phủ nút phát. Chừa tai thỏ/Dynamic Island: ngang cộng `env(safe-area-inset-left/right)`; dọc trên máy cảm ứng thẻ chỉ dẫn `top: max(3cqw + safe-top, 56px)`, tiêu đề `24cqw + 56px`; hàng nút dọc cộng `safe-area-inset-bottom` |
 | `/* ---------- hướng dẫn cho bố mẹ ---------- */` | GIỮ | |
 
 ## SVG world (`<svg class="world">`)
