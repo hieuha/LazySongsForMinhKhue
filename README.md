@@ -18,6 +18,7 @@ CNAME               Tên miền GitHub Pages (songs.hatrunghieu.com)
 index.html          Trang chủ: danh sách bài hát, tìm kiếm, lọc theo chủ đề, chọn bài bất kỳ
 songs/
   songs.js          Danh sách bài hát hiển thị ở trang chủ
+  covers/           Ảnh bìa SVG vẽ từ nhân vật trong từng bài
   1.<ten-bai>.html  Từng bài hát (slide động + nhạc)
 ```
 
@@ -26,6 +27,7 @@ songs/
 | # | Bài | Nội dung |
 |---|---|---|
 | 1 | 🕷️ [Chú Nhện Đen](songs/1.chu-nhen-den-bo-tren-mai-nha.html) | Nhện leo mái nhà, gặp mưa, gặp nắng rồi lại leo lên — giai điệu *Itsy Bitsy Spider* |
+| 2 | 🐵 [Năm Chú Khỉ Con](songs/2.nam-chu-khi-con-nhay-tren-giuong.html) | Đếm lùi 5 → 1: khỉ nhảy trên giường, ngã u đầu, mẹ gọi bác sĩ, cả nhà đi ngủ — giai điệu *Five Little Monkeys* |
 
 ## Thêm bài hát mới
 

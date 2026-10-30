@@ -23,7 +23,6 @@
   .wrap{max-width:1180px;margin:0 auto;padding:32px 16px 64px}
 
   header{text-align:center;margin-bottom:24px}
-  .logo{font-size:64px;line-height:1;display:inline-block;animation:bob 2.4s ease-in-out infinite}
   h1{margin:4px 0 0;font-size:clamp(34px,6vw,60px);line-height:1.05;font-weight:800}
   h1 span{display:inline-block}
   h1 span:nth-child(1){color:#FF5A5A} h1 span:nth-child(2){color:#FF9F43}
@@ -63,7 +62,8 @@
   .thumb::after{content:"";position:absolute;inset:0;
     background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.45),transparent 55%)}
   .emoji{font-size:84px;line-height:1;transition:transform .3s}
-  .card:hover .emoji{transform:scale(1.15) rotate(-8deg)}
+  .cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .3s}
+  .card:hover .emoji,.card:hover .cover{transform:scale(1.08) rotate(-2deg)}
   .no{position:absolute;left:14px;top:12px;z-index:1;min-width:36px;height:36px;padding:0 10px;border-radius:999px;
       display:grid;place-items:center;background:#fff;font-weight:800;font-size:18px}
   .play{position:absolute;right:14px;bottom:12px;z-index:1;width:52px;height:52px;border-radius:50%;
@@ -83,7 +83,6 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="logo" aria-hidden="true">🎵</div>
     <h1><span>Bài</span> <span>hát</span> <span>của</span> <span>Minh</span> <span>Khuê</span></h1>
     <p class="sub">Chạm vào một bài để hát và nhảy cùng nhau nhé!</p>
   </header>
@@ -126,7 +125,7 @@
       <li><a class="card" href="${esc(s.file)}">
         <div class="thumb" style="--c:${esc(s.color || '#FFD98C')}">
           <span class="no">${esc(s.no)}</span>
-          <span class="emoji" aria-hidden="true">${esc(s.emoji || '🎵')}</span>
+          ${s.cover ? `<img class="cover" src="${esc(s.cover)}" alt="">` : `<span class="emoji" aria-hidden="true">${esc(s.emoji || '🎵')}</span>`}
           <span class="play"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></svg></span>
         </div>
         <div class="body">

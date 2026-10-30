@@ -14,6 +14,8 @@ Biến một bài hát thiếu nhi thành trang `songs/<số>.<ten-bai>.html` đ
 | `references/toddler-content-and-visual-guide.md` | **Luôn đọc.** Bé hiểu gì theo tháng tuổi, cấu trúc bài, công thức nhân vật dễ thương, bảng màu, chuyển động, hiệu ứng phần thưởng, kho động tác, checklist |
 | `references/song-engine-anatomy.md` | Khi dựng file: phần nào của khuôn mẫu giữ, phần nào thay; định dạng dữ liệu câu hát; chế độ hiển thị & camera; toạ độ an toàn |
 | `songs/1.chu-nhen-den-bo-tren-mai-nha.html` | **Khuôn mẫu chuẩn.** Luôn sao chép file này; không viết engine từ đầu |
+| `songs/2.nam-chu-khi-con-nhay-tren-giuong.html` | Ví dụ bài 4/4, **nhiều nhân vật** nhân bản từ một khuôn, cảnh trong nhà, kết ru ngủ (`soft`) |
+| `songs/covers/*.svg` | Ví dụ ảnh bìa vẽ từ nhân vật trong bài |
 | `scripts/screenshot-song-scenes.mjs` | Bước kiểm tra: chụp ảnh từng cảnh (máy tính + điện thoại) |
 
 ## Cấu trúc repo liên quan
@@ -33,6 +35,8 @@ README.md            Có bảng "Danh sách bài hát"
 - Nội dung vui tươi, hình đáng yêu, bắt mắt, hợp bé 1–3 tuổi; bé nhìn là hiểu, vừa nhảy vừa hát.
 - Có khoảnh khắc cảm xúc phóng đại theo lời (vd nhện **giật mình** khi mưa tới) và phần thưởng thị giác (vd **cầu vồng** khi tạnh, **muôn ngàn tia nắng lấp lánh**).
 - Mở trên điện thoại: **mặc định NGANG phủ kín màn hình** (không viền trống hai bên, tự vào toàn màn hình/xoay ngang); có nút đổi sang **DỌC kiểu TikTok**, ở chế độ dọc **các nút nằm dưới đáy** để không che hình.
+- **Chất liệu nghệ thuật kiểu tranh truyện** ở mọi bài, ngay từ đầu (guide mục 11): gradient khối + nét mực + vệt sáng cho nhân vật, bóng đổ dưới chân, nền nhiều lớp có chi tiết vẽ tay, hạt giấy + nắng mềm. Không vẽ chữ/nhãn trong cảnh.
+- **Ảnh bìa trang chủ vẽ đúng nhân vật trong bài** (SVG trong `songs/covers/`), không dùng emoji (guide mục 12).
 - Lời 1 hay 2 dòng đều **không được che nhân vật** — engine tự xử lý, không chỉnh tay từng bài.
 - Không thứ gì bị **tai thỏ / Dynamic Island** che: ở chế độ dọc trên điện thoại thẻ chỉ dẫn luôn cách mép trên ≥ 56px; khi điện thoại quay ngang thì thẻ, nút, thanh lời lùi vào theo `env(safe-area-inset-left/right)`. Engine đã có sẵn (cần `viewport-fit=cover` trong thẻ meta viewport).
 
@@ -68,6 +72,7 @@ Yêu cầu bảng phải đạt:
 ### 4. Thiết kế nhân vật & thế giới
 - Nhân vật theo **công thức kawaii** (guide mục 4): khối tròn lớn, mắt to có chấm sáng, má hồng, một phụ kiện màu nổi, chi tròn mập; đủ 4 mood `smile/grin/wow/happy`.
 - Vẽ bản mini của nhân vật cho `#mini` (quả bóng karaoke).
+- Áp dụng đủ **chất liệu nghệ thuật** (guide mục 11) cho nhân vật và bối cảnh. Nhiều nhân vật → một khuôn trong `<defs>` + nhân bản bằng JS (anatomy mục *Nhiều nhân vật*).
 - Bối cảnh màu phẳng tươi, viền đậm, đồ vật có mặt cười, ≤ ~6 vật chính mỗi cảnh. Nền đổi màu theo cảnh (guide mục 5).
 - Vẽ trời/đồi/đất **tràn ra ngoài 1280×720** (trời x -700…1980, y -1300…900; đất tới y 2200) và thêm hoa/cỏ ở x < 0, x > 1280 — camera cắt theo tỷ lệ màn hình nên không bao giờ hở nền.
 - Nhân vật đứng trên cỏ ở y ≈ 470; điểm thấp nhất của nhân vật (kể cả chân, ở scale lớn nhất) phải ≤ `GROUND_Y` (mặc định 590). Nhân vật mới cao/thấp hơn thì chỉnh `GROUND_Y`, không chỉnh từng cảnh.
@@ -78,7 +83,8 @@ Yêu cầu bảng phải đạt:
 3. **Giữ nguyên** engine âm thanh, lập lịch, karaoke, tương tác, chế độ ngang/dọc, camera (`updateCamera`, `GROUND_Y`), bố cục nút (dọc: nút dưới đáy), nút 🏠 về `../index.html`.
 
 ### 6. Đăng ký vào thư viện
-- Thêm mục vào `songs/songs.js`: `no`, `title`, `file`, `emoji` (biểu tượng nhân vật), `color` (màu chủ đạo của bài), `duration`, `tags` (tái sử dụng tag có sẵn: con vật, thời tiết, vận động…), `desc` (1 câu kể chuyện).
+- Vẽ ảnh bìa `songs/covers/<n>.<slug>.svg` từ đúng markup nhân vật trong bài (guide mục 12).
+- Thêm mục vào `songs/songs.js`: `no`, `title`, `file`, `cover`, `emoji` (dự phòng), `color` (màu chủ đạo của bài), `duration`, `tags` (tái sử dụng tag có sẵn: con vật, thời tiết, vận động…), `desc` (1 câu kể chuyện).
 - Thêm một dòng vào bảng *Danh sách bài hát* trong `README.md`.
 
 ### 7. Kiểm tra — bắt buộc, không bỏ qua
@@ -86,8 +92,8 @@ Yêu cầu bảng phải đạt:
 2. Chụp từng cảnh ở 3 khung (chạy trong thư mục có `playwright`, vd scratchpad: `npm i playwright`):
    `node <repo>/.claude/skills/kids-song-deck/scripts/screenshot-song-scenes.mjs <repo>/songs/<file>.html <out-dir> 1.2 --phone`
    → `desk-*` (1280×720), `phone-land-*` (844×390, ngang phủ kín), `phone-port-*` (390×844, dọc TikTok). Script tự tìm Chromium (bản khớp playwright → Google Chrome → cache `ms-playwright`).
-3. **Đọc từng ảnh** và đối chiếu checklist (guide mục 11): hình khớp câu; nhân vật (cả chân) nằm trên thanh lời ở mọi khung, kể cả câu 2 dòng; chữ không đè nhau; mood đúng; không hở nền; khung dọc thấy hành động chính, nút ở đáy không che hình; `errors: []`. Sửa và chụp lại tới khi đạt.
-4. Mở `index.html`: thẻ bài mới hiện, bấm vào được, nút 🏠 quay về được.
+3. **Đọc từng ảnh** và đối chiếu checklist (guide mục 13): hình khớp câu; nhân vật (cả chân) nằm trên thanh lời ở mọi khung, kể cả câu 2 dòng; chữ không đè nhau; mood đúng; không hở nền; khung dọc thấy hành động chính, nút ở đáy không che hình; `errors: []`. Sửa và chụp lại tới khi đạt.
+4. Mở `index.html` và chụp ảnh: thẻ bài mới hiện với ảnh bìa đúng nhân vật, bấm vào được, nút 🏠 quay về được.
 5. Âm thanh không kiểm tra tự động được → nói rõ người dùng cần nghe thử trên máy thật.
 
 ### 8. Commit & phát hành (khi người dùng yêu cầu)
@@ -110,4 +116,8 @@ Yêu cầu bảng phải đạt:
 - `const` khai báo sau hàm vẫn dùng được trong hàm miễn là hàm chỉ chạy sau (vòng `frame` khởi động cuối script) — giữ `requestAnimationFrame(frame)` ở cuối.
 - Playwright cài mới có thể đòi bản Chromium khác bản trong cache → script đã tự dò; đừng tải lại trình duyệt nếu không cần.
 - `env(safe-area-inset-top)` thường bằng 0 trong Safari/Chrome thường (thanh trình duyệt đã chiếm chỗ) nhưng Island vẫn có thể đè khi toàn màn hình → dùng `max(…, 56px)` trên thiết bị cảm ứng thay vì chỉ tin vào safe-area.
+- Tay/chi vẽ trước đầu sẽ biến mất khi giơ lên (bị đầu che) → vẽ tay sau đầu.
+- Nhãn chữ trong cảnh ("Bác sĩ"…) dính vào nhân vật, khó đọc → bỏ, để hình tự nói.
+- Đồ trang trí đặt sau vùng tiêu đề lớn hoặc chồng nhau trông rối → kiểm tra cảnh mở đầu/kết và khung dọc.
+- Emoji 🕷️ trên ảnh bìa là nhện thật, không giống nhân vật → luôn dùng ảnh bìa SVG.
 - Giữ file tự chứa: không thêm file âm thanh/ảnh ngoài; font Baloo 2 từ Google Fonts có font dự phòng khi offline.

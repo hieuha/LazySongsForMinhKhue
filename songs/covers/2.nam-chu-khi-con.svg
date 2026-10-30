@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <style>.eyes-happy,.eyes-sleep,.m-wow,.m-smile,.bump,.dizzy,.heal,.phone,.mk-hit{display:none}</style>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE6B8"/><stop offset="1" stop-color="#FFF4DE"/></linearGradient>
+    <radialGradient id="light" cx=".25" cy="0" r="1"><stop offset="0" stop-color="#FFF8E1" stop-opacity=".22"/><stop offset=".6" stop-color="#FFF8E1" stop-opacity="0"/></radialGradient>
+    <radialGradient id="furGrad" cx=".35" cy=".3" r=".8">
+        <stop offset="0" stop-color="#C98446"/><stop offset=".6" stop-color="#9A5B2E"/><stop offset="1" stop-color="#6E3A17"/></radialGradient>
+    <radialGradient id="skinGrad" cx=".4" cy=".3" r=".8">
+        <stop offset="0" stop-color="#FFE6C8"/><stop offset="1" stop-color="#EDBE8C"/></radialGradient>
+  </defs>
+  <rect width="320" height="200" fill="url(#bg)"/>
+  <circle cx="20" cy="20" r="5" fill="#fff" opacity=".45"/><circle cx="60" cy="50" r="5" fill="#fff" opacity=".45"/>
+  <circle cx="280" cy="24" r="5" fill="#fff" opacity=".45"/><circle cx="300" cy="80" r="5" fill="#fff" opacity=".45"/>
+  <rect y="178" width="320" height="22" fill="#E3A66B"/>
+  <rect x="34" y="96" width="16" height="90" rx="7" fill="#C96F4A" stroke="#5A3E2B" stroke-width="3"/>
+  <rect x="270" y="122" width="15" height="64" rx="7" fill="#C96F4A" stroke="#5A3E2B" stroke-width="3"/>
+  <rect x="44" y="140" width="232" height="34" rx="14" fill="#7FC8F8" stroke="#5A3E2B" stroke-width="3"/>
+  <g fill="#3A1E08" opacity=".16"><ellipse cx="95" cy="142" rx="26" ry="5"/><ellipse cx="160" cy="142" rx="22" ry="5"/><ellipse cx="225" cy="142" rx="26" ry="5"/></g>
+  <g transform="translate(95 92) rotate(-8) scale(0.62)"><g class="mk" data-mood="smile">
+        <g class="mk-squash">
+          <path d="M20 30 C62 44 74 4 54 -8 C42 -14 36 2 46 4" fill="none" stroke="#9A5B2E" stroke-width="9" stroke-linecap="round"/>
+          <ellipse cx="-16" cy="46" rx="13" ry="9" fill="#9A5B2E"/>
+          <ellipse cx="16" cy="46" rx="13" ry="9" fill="#9A5B2E"/>
+          <ellipse class="body" cx="0" cy="18" rx="30" ry="30" fill="url(#furGrad)" stroke="#5E3415" stroke-width="2.5"/>
+          <ellipse class="belly" cx="0" cy="22" rx="18" ry="19" fill="#F6D2A8"/>
+          <path class="scarf" d="M-22 -4 Q0 10 22 -4 L6 14 L0 24 L-6 14 Z" fill="#FF5A5A"/>
+          <g stroke="#5E3415" stroke-width="2.5"><circle cx="-38" cy="-36" r="14" fill="url(#furGrad)"/><circle cx="38" cy="-36" r="14" fill="url(#furGrad)"/></g>
+          <circle cx="-38" cy="-36" r="8" fill="#F6D2A8"/><circle cx="38" cy="-36" r="8" fill="#F6D2A8"/>
+          <circle cx="0" cy="-32" r="36" fill="url(#furGrad)" stroke="#5E3415" stroke-width="2.5"/>
+          <ellipse cx="-14" cy="-52" rx="9" ry="5" fill="#fff" opacity=".2" transform="rotate(-25 -14 -52)"/>
+          <g fill="url(#skinGrad)"><circle cx="-12" cy="-38" r="14"/><circle cx="12" cy="-38" r="14"/><ellipse cx="0" cy="-20" rx="24" ry="16"/></g>
+          <g class="eyes-open"><g class="blink">
+            <ellipse cx="-11" cy="-38" rx="6.5" ry="8.5" fill="#2B1A10"/><ellipse cx="11" cy="-38" rx="6.5" ry="8.5" fill="#2B1A10"/>
+            <circle cx="-9" cy="-41" r="2.6" fill="#fff"/><circle cx="13" cy="-41" r="2.6" fill="#fff"/>
+          </g></g>
+          <g class="eyes-happy" fill="none" stroke="#2B1A10" stroke-width="4" stroke-linecap="round">
+            <path d="M-18 -36 Q-11 -46 -4 -36"/><path d="M4 -36 Q11 -46 18 -36"/></g>
+          <g class="eyes-sleep" fill="none" stroke="#2B1A10" stroke-width="4" stroke-linecap="round">
+            <path d="M-18 -40 Q-11 -33 -4 -40"/><path d="M4 -40 Q11 -33 18 -40"/></g>
+          <circle cx="-4" cy="-24" r="2" fill="#7A4521"/><circle cx="4" cy="-24" r="2" fill="#7A4521"/>
+          <ellipse cx="-22" cy="-18" rx="6" ry="4" fill="#FF9AB5"/><ellipse cx="22" cy="-18" rx="6" ry="4" fill="#FF9AB5"/>
+          <path class="m-smile" d="M-8 -14 Q0 -7 8 -14" fill="none" stroke="#7A4521" stroke-width="3.5" stroke-linecap="round"/>
+          <ellipse class="m-wow" cx="0" cy="-11" rx="5" ry="6.5" fill="#C2405F"/>
+          <path class="m-grin" d="M-11 -15 Q0 2 11 -15 Z" fill="#C2405F"/>
+          <!-- tay vẽ sau đầu để khi giơ lên (vẫy, xoa đầu, cầm điện thoại) không bị đầu che -->
+          <g class="armL" transform="rotate(95 -22 4)"><path d="M-22 4 Q-42 8 -50 28" fill="none" stroke="#9A5B2E" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="-50" cy="30" r="8" fill="#F6D2A8"/></g>
+          <g class="armR" transform="rotate(-95 22 4)"><path d="M22 4 Q42 8 50 28" fill="none" stroke="#9A5B2E" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="50" cy="30" r="8" fill="#F6D2A8"/></g>
+          <g class="bump"><g class="bump-in"><circle cx="16" cy="-66" r="11" fill="#FF8FB1"/>
+            <circle cx="13" cy="-69" r="3.5" fill="#fff" opacity=".7"/></g></g>
+          <g class="dizzy"><g transform="translate(0 -84)"><g class="dizzy-spin" fill="#FFD23F" stroke="#FF9F43" stroke-width="1.5">
+            <path transform="translate(-32 0)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+            <path transform="translate(32 0)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+            <path transform="translate(0 -12)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+            <path transform="translate(0 12)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+          </g></g></g>
+          <g class="heal"><path d="M16 -54 C2 -63 5 -76 13 -73 C15 -72 16 -70 16 -69 C16 -70 17 -72 19 -73 C27 -76 30 -63 16 -54Z"
+            fill="#FF5A8A" stroke="#fff" stroke-width="2.5"/></g>
+        </g>
+        <circle class="mk-hit" cy="-10" r="62" fill="transparent"/>
+      </g></g>
+  <g transform="translate(160 70) rotate(0) scale(0.62)"><g class="mk" data-mood="smile">
+        <g class="mk-squash">
+          <path d="M20 30 C62 44 74 4 54 -8 C42 -14 36 2 46 4" fill="none" stroke="#9A5B2E" stroke-width="9" stroke-linecap="round"/>
+          <ellipse cx="-16" cy="46" rx="13" ry="9" fill="#9A5B2E"/>
+          <ellipse cx="16" cy="46" rx="13" ry="9" fill="#9A5B2E"/>
+          <ellipse class="body" cx="0" cy="18" rx="30" ry="30" fill="url(#furGrad)" stroke="#5E3415" stroke-width="2.5"/>
+          <ellipse class="belly" cx="0" cy="22" rx="18" ry="19" fill="#F6D2A8"/>
+          <path class="scarf" d="M-22 -4 Q0 10 22 -4 L6 14 L0 24 L-6 14 Z" fill="#4FB3FF"/>
+          <g stroke="#5E3415" stroke-width="2.5"><circle cx="-38" cy="-36" r="14" fill="url(#furGrad)"/><circle cx="38" cy="-36" r="14" fill="url(#furGrad)"/></g>
+          <circle cx="-38" cy="-36" r="8" fill="#F6D2A8"/><circle cx="38" cy="-36" r="8" fill="#F6D2A8"/>
+          <circle cx="0" cy="-32" r="36" fill="url(#furGrad)" stroke="#5E3415" stroke-width="2.5"/>
+          <ellipse cx="-14" cy="-52" rx="9" ry="5" fill="#fff" opacity=".2" transform="rotate(-25 -14 -52)"/>
+          <g fill="url(#skinGrad)"><circle cx="-12" cy="-38" r="14"/><circle cx="12" cy="-38" r="14"/><ellipse cx="0" cy="-20" rx="24" ry="16"/></g>
+          <g class="eyes-open"><g class="blink">
+            <ellipse cx="-11" cy="-38" rx="6.5" ry="8.5" fill="#2B1A10"/><ellipse cx="11" cy="-38" rx="6.5" ry="8.5" fill="#2B1A10"/>
+            <circle cx="-9" cy="-41" r="2.6" fill="#fff"/><circle cx="13" cy="-41" r="2.6" fill="#fff"/>
+          </g></g>
+          <g class="eyes-happy" fill="none" stroke="#2B1A10" stroke-width="4" stroke-linecap="round">
+            <path d="M-18 -36 Q-11 -46 -4 -36"/><path d="M4 -36 Q11 -46 18 -36"/></g>
+          <g class="eyes-sleep" fill="none" stroke="#2B1A10" stroke-width="4" stroke-linecap="round">
+            <path d="M-18 -40 Q-11 -33 -4 -40"/><path d="M4 -40 Q11 -33 18 -40"/></g>
+          <circle cx="-4" cy="-24" r="2" fill="#7A4521"/><circle cx="4" cy="-24" r="2" fill="#7A4521"/>
+          <ellipse cx="-22" cy="-18" rx="6" ry="4" fill="#FF9AB5"/><ellipse cx="22" cy="-18" rx="6" ry="4" fill="#FF9AB5"/>
+          <path class="m-smile" d="M-8 -14 Q0 -7 8 -14" fill="none" stroke="#7A4521" stroke-width="3.5" stroke-linecap="round"/>
+          <ellipse class="m-wow" cx="0" cy="-11" rx="5" ry="6.5" fill="#C2405F"/>
+          <path class="m-grin" d="M-11 -15 Q0 2 11 -15 Z" fill="#C2405F"/>
+          <!-- tay vẽ sau đầu để khi giơ lên (vẫy, xoa đầu, cầm điện thoại) không bị đầu che -->
+          <g class="armL" transform="rotate(110 -22 4)"><path d="M-22 4 Q-42 8 -50 28" fill="none" stroke="#9A5B2E" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="-50" cy="30" r="8" fill="#F6D2A8"/></g>
+          <g class="armR" transform="rotate(-110 22 4)"><path d="M22 4 Q42 8 50 28" fill="none" stroke="#9A5B2E" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="50" cy="30" r="8" fill="#F6D2A8"/></g>
+          <g class="bump"><g class="bump-in"><circle cx="16" cy="-66" r="11" fill="#FF8FB1"/>
+            <circle cx="13" cy="-69" r="3.5" fill="#fff" opacity=".7"/></g></g>
+          <g class="dizzy"><g transform="translate(0 -84)"><g class="dizzy-spin" fill="#FFD23F" stroke="#FF9F43" stroke-width="1.5">
+            <path transform="translate(-32 0)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+            <path transform="translate(32 0)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+            <path transform="translate(0 -12)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+            <path transform="translate(0 12)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+          </g></g></g>
+          <g class="heal"><path d="M16 -54 C2 -63 5 -76 13 -73 C15 -72 16 -70 16 -69 C16 -70 17 -72 19 -73 C27 -76 30 -63 16 -54Z"
+            fill="#FF5A8A" stroke="#fff" stroke-width="2.5"/></g>
+        </g>
+        <circle class="mk-hit" cy="-10" r="62" fill="transparent"/>
+      </g></g>
+  <g transform="translate(225 96) rotate(8) scale(0.62)"><g class="mk" data-mood="smile">
+        <g class="mk-squash">
+          <path d="M20 30 C62 44 74 4 54 -8 C42 -14 36 2 46 4" fill="none" stroke="#9A5B2E" stroke-width="9" stroke-linecap="round"/>
+          <ellipse cx="-16" cy="46" rx="13" ry="9" fill="#9A5B2E"/>
+          <ellipse cx="16" cy="46" rx="13" ry="9" fill="#9A5B2E"/>
+          <ellipse class="body" cx="0" cy="18" rx="30" ry="30" fill="url(#furGrad)" stroke="#5E3415" stroke-width="2.5"/>
+          <ellipse class="belly" cx="0" cy="22" rx="18" ry="19" fill="#F6D2A8"/>
+          <path class="scarf" d="M-22 -4 Q0 10 22 -4 L6 14 L0 24 L-6 14 Z" fill="#5BD66B"/>
+          <g stroke="#5E3415" stroke-width="2.5"><circle cx="-38" cy="-36" r="14" fill="url(#furGrad)"/><circle cx="38" cy="-36" r="14" fill="url(#furGrad)"/></g>
+          <circle cx="-38" cy="-36" r="8" fill="#F6D2A8"/><circle cx="38" cy="-36" r="8" fill="#F6D2A8"/>
+          <circle cx="0" cy="-32" r="36" fill="url(#furGrad)" stroke="#5E3415" stroke-width="2.5"/>
+          <ellipse cx="-14" cy="-52" rx="9" ry="5" fill="#fff" opacity=".2" transform="rotate(-25 -14 -52)"/>
+          <g fill="url(#skinGrad)"><circle cx="-12" cy="-38" r="14"/><circle cx="12" cy="-38" r="14"/><ellipse cx="0" cy="-20" rx="24" ry="16"/></g>
+          <g class="eyes-open"><g class="blink">
+            <ellipse cx="-11" cy="-38" rx="6.5" ry="8.5" fill="#2B1A10"/><ellipse cx="11" cy="-38" rx="6.5" ry="8.5" fill="#2B1A10"/>
+            <circle cx="-9" cy="-41" r="2.6" fill="#fff"/><circle cx="13" cy="-41" r="2.6" fill="#fff"/>
+          </g></g>
+          <g class="eyes-happy" fill="none" stroke="#2B1A10" stroke-width="4" stroke-linecap="round">
+            <path d="M-18 -36 Q-11 -46 -4 -36"/><path d="M4 -36 Q11 -46 18 -36"/></g>
+          <g class="eyes-sleep" fill="none" stroke="#2B1A10" stroke-width="4" stroke-linecap="round">
+            <path d="M-18 -40 Q-11 -33 -4 -40"/><path d="M4 -40 Q11 -33 18 -40"/></g>
+          <circle cx="-4" cy="-24" r="2" fill="#7A4521"/><circle cx="4" cy="-24" r="2" fill="#7A4521"/>
+          <ellipse cx="-22" cy="-18" rx="6" ry="4" fill="#FF9AB5"/><ellipse cx="22" cy="-18" rx="6" ry="4" fill="#FF9AB5"/>
+          <path class="m-smile" d="M-8 -14 Q0 -7 8 -14" fill="none" stroke="#7A4521" stroke-width="3.5" stroke-linecap="round"/>
+          <ellipse class="m-wow" cx="0" cy="-11" rx="5" ry="6.5" fill="#C2405F"/>
+          <path class="m-grin" d="M-11 -15 Q0 2 11 -15 Z" fill="#C2405F"/>
+          <!-- tay vẽ sau đầu để khi giơ lên (vẫy, xoa đầu, cầm điện thoại) không bị đầu che -->
+          <g class="armL" transform="rotate(90 -22 4)"><path d="M-22 4 Q-42 8 -50 28" fill="none" stroke="#9A5B2E" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="-50" cy="30" r="8" fill="#F6D2A8"/></g>
+          <g class="armR" transform="rotate(-90 22 4)"><path d="M22 4 Q42 8 50 28" fill="none" stroke="#9A5B2E" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="50" cy="30" r="8" fill="#F6D2A8"/></g>
+          <g class="bump"><g class="bump-in"><circle cx="16" cy="-66" r="11" fill="#FF8FB1"/>
+            <circle cx="13" cy="-69" r="3.5" fill="#fff" opacity=".7"/></g></g>
+          <g class="dizzy"><g transform="translate(0 -84)"><g class="dizzy-spin" fill="#FFD23F" stroke="#FF9F43" stroke-width="1.5">
+            <path transform="translate(-32 0)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+            <path transform="translate(32 0)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+            <path transform="translate(0 -12)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+            <path transform="translate(0 12)" d="M0 -8 L2.4 -2.4 L8 -2.4 L3.6 1.2 L5.2 8 L0 4 L-5.2 8 L-3.6 1.2 L-8 -2.4 L-2.4 -2.4Z"/>
+          </g></g></g>
+          <g class="heal"><path d="M16 -54 C2 -63 5 -76 13 -73 C15 -72 16 -70 16 -69 C16 -70 17 -72 19 -73 C27 -76 30 -63 16 -54Z"
+            fill="#FF5A8A" stroke="#fff" stroke-width="2.5"/></g>
+        </g>
+        <circle class="mk-hit" cy="-10" r="62" fill="transparent"/>
+      </g></g>
+  <rect width="320" height="200" fill="url(#light)"/>
+</svg>

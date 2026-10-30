@@ -103,13 +103,48 @@ Kho động tác hợp tuổi: vẫy tay · vỗ tay · lắc lư · nhún gối
 - Câu ≤ ~8 âm tiết một dòng; dài hơn thì xuống dòng bằng `/`.
 - Tiêu đề lớn chỉ ở mở đầu và kết, chữ trắng viền đậm, mỗi từ một màu, lắc lư nhẹ.
 
-## 11. Checklist trước khi giao
+## 11. Chất liệu nghệ thuật — phong cách tranh truyện thiếu nhi (BẮT BUỘC mọi bài)
+
+Hình phẳng một màu nhìn "rẻ". Mỗi bài phải có đủ các lớp dưới đây ngay lần đầu, không đợi người dùng nhắc.
+
+**Lớp chung (đã có trong engine khuôn mẫu, chỉ cần giữ):**
+- `.light`: nắng mềm từ trên trái + viền tối nhẹ quanh mép → chiều sâu.
+- `.grain`: hạt giấy + sợi xơ vẽ bằng canvas một lần, `mix-blend-mode: multiply`, opacity ~.18 → cảm giác giấy vẽ.
+
+**Nhân vật:**
+- Khối lớn (thân, đầu, tai) tô bằng **radial gradient** sáng ở trên-trái, tối ở mép (vd lông khỉ `#C98446 → #9A5B2E → #6E3A17`, thân nhện `#5D5490 → #2B2540 → #17122A`); da/mặt dùng gradient da nhẹ.
+- **Nét mực** viền khối chính: stroke tối cùng tông (vd `#5E3415`), dày 2–3.
+- **Vệt bóng sáng** trắng opacity ~.2 trên đầu/thân.
+- **Bóng đổ dưới chân** (ellipse tối opacity ~.22) bám theo x của nhân vật, nhỏ và nhạt dần khi nhảy cao, tắt khi nằm/ngủ. Có trên mọi bề mặt nhân vật đứng (cỏ, nệm, thảm).
+- Tay/chi giơ lên phải **vẽ sau đầu** trong thứ tự SVG để không bị che.
+
+**Bối cảnh — luôn có tiền cảnh / trung cảnh / hậu cảnh:**
+- Ngoài trời: lớp `skyLight` (trời sáng dần về chân trời), đồi xa nhạt màu (opacity ~.75), đồi gần, mặt đất có gradient tối dần + cụm cỏ nét bút, hoa; mặt trời có quầng sáng radial.
+- Trong nhà: tường có hoa văn nhẹ (pattern chấm bi trắng opacity ~.45) + gradient sáng trên/tối chân tường; sàn gỗ có vân + gradient; vệt nắng xiên từ cửa sổ (tắt khi đêm); đèn ngủ có quầng radial; dây cờ trang trí phần tường trên (lấp khoảng trống ở khung dọc).
+- Đồ vật có chi tiết vẽ tay: ngói mái (đường lượn), kính cửa sổ loé sáng (2 vệt trắng chéo), bóng dưới mái hiên, nệm/ga có gradient + chấm.
+- Màu nền đổi theo cảnh qua `fill` + transition; gradient/pattern đặt ở **lớp phủ riêng** phía trên (vì gradient không transition được).
+
+**Tránh:**
+- Chữ/nhãn vẽ trong cảnh (vd chữ "Bác sĩ" dưới bong bóng) — dễ dính vào nhân vật, khó đọc; để hình tự nói.
+- Đồ trang trí nằm sau vùng tiêu đề lớn (tranh treo tường bị chữ "Ngủ ngon nhé!" đè) hoặc chồng lên nhau (đồ chơi treo cắt dây cờ).
+- Emoji làm hình nhân vật/ảnh bìa — emoji là hình thật (nhện thật đáng sợ), không khớp nhân vật hoạt hình.
+
+## 12. Ảnh bìa trang chủ
+
+- Mỗi bài có `songs/covers/<n>.<slug>.svg` (viewBox 320×200) vẽ lại **đúng nhân vật trong bài**: copy nguyên markup nhân vật + gradient từ file bài (không vẽ lại kiểu khác), nền theo bối cảnh bài, có bóng đổ và quầng sáng nhẹ.
+- SVG dùng `<style>` ẩn các biến thể nét mặt/trạng thái, chỉ giữ mặt cười tươi (`.eyes-happy,.eyes-sleep,.m-wow,.m-smile,.bump,.dizzy,.heal,.phone,.mk-hit{display:none}` — sửa theo class của bài).
+- Khai báo `cover:` trong `songs/songs.js`; `emoji` chỉ là dự phòng khi thiếu ảnh bìa.
+- Kiểm tra bằng ảnh chụp trang chủ: nhân vật trên bìa phải nhận ra ngay là nhân vật trong bài.
+
+## 13. Checklist trước khi giao
 
 - [ ] Mỗi câu hát có cảnh riêng, hình khớp nghĩa câu (che chữ đi vẫn đoán được câu).
 - [ ] Nhân vật dễ thương theo công thức mục 4, có ≥ 3 cảm xúc khác nhau trong bài.
 - [ ] Có ít nhất một khoảnh khắc bất ngờ phóng đại và một khoảnh khắc "phần thưởng" (cầu vồng, sao, hoa giấy).
 - [ ] Mỗi cảnh có thẻ động tác; động tác hợp tuổi.
 - [ ] Không có gì đáng sợ, không nhấp nháy nhanh.
+- [ ] Đủ chất liệu nghệ thuật mục 11: gradient + nét mực + vệt sáng cho nhân vật, bóng đổ dưới chân, nền nhiều lớp có chi tiết vẽ tay, lớp `.light` + `.grain` còn nguyên; không có chữ/nhãn vẽ trong cảnh.
+- [ ] Có ảnh bìa SVG đúng nhân vật (mục 12), đã khai báo `cover`.
 - [ ] Nhân vật/vật quan trọng không bị thanh lời, thẻ gợi ý, nút che (xem ảnh chụp).
 - [ ] Chữ đang hát không đè chữ bên cạnh.
 - [ ] Mở trên điện thoại: chế độ ngang phủ kín màn hình (không viền trống), chế độ dọc thấy rõ nhân vật và hành động của từng cảnh, hàng nút nằm dưới đáy, thẻ chỉ dẫn không bị tai thỏ/Dynamic Island che.

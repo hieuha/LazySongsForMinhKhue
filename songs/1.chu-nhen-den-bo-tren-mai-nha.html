@@ -201,6 +201,15 @@
   .resync .beat{animation:none !important}
   .stage.paused .world *{animation-play-state:paused !important}
 
+  /* ---------- chất liệu tranh (engine, dùng chung mọi bài) ----------
+     .light: nắng mềm từ trên trái + viền tối nhẹ quanh mép (chiều sâu);
+     .grain: hạt giấy vẽ bằng canvas lúc tải trang, nhân (multiply) lên toàn cảnh. */
+  .light,.grain{position:absolute;inset:0;pointer-events:none;z-index:1}
+  .light{background:
+    radial-gradient(110% 80% at 22% 0%, rgba(255,248,225,.38), transparent 62%),
+    radial-gradient(150% 120% at 50% 42%, transparent 58%, rgba(40,22,70,.24) 100%)}
+  .grain{opacity:.18;mix-blend-mode:multiply;background-size:200px 200px}
+
   /* ---------- lớp HTML trên sân khấu ---------- */
   .cue{
     position:absolute; left:calc(2*var(--u)); top:calc(2*var(--u)); z-index:3; pointer-events:none;
@@ -316,9 +325,21 @@
         <circle cx="-9" cy="-3" r="4.5" fill="#1E1A30"/><circle cx="11" cy="-3" r="4.5" fill="#1E1A30"/>
         <path d="M-7 10 Q0 16 7 10" stroke="#FF8FB1" stroke-width="3.5" fill="none" stroke-linecap="round"/>
       </symbol>
+      <!-- chuyển sắc cho khối tròn, ánh sáng chân trời, quầng mặt trời -->
+      <radialGradient id="spiderGrad" cx=".36" cy=".3" r=".75">
+        <stop offset="0" stop-color="#5D5490"/><stop offset=".55" stop-color="#2B2540"/><stop offset="1" stop-color="#17122A"/></radialGradient>
+      <linearGradient id="skyLight" gradientUnits="userSpaceOnUse" x1="0" y1="-300" x2="0" y2="540">
+        <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".42"/></linearGradient>
+      <linearGradient id="groundShade" gradientUnits="userSpaceOnUse" x1="0" y1="540" x2="0" y2="760">
+        <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#1D4A12" stop-opacity=".28"/></linearGradient>
+      <radialGradient id="sunHalo"><stop offset=".45" stop-color="#FFF3B0" stop-opacity=".9"/>
+        <stop offset="1" stop-color="#FFF3B0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="wallShade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#7A4A1A" stop-opacity=".16"/><stop offset=".25" stop-color="#7A4A1A" stop-opacity="0"/></linearGradient>
     </defs>
 
     <rect id="sky" x="-700" y="-1300" width="2680" height="2200"/>
+    <rect x="-700" y="-1300" width="2680" height="2200" fill="url(#skyLight)"/>
 
     <!-- đèn sân khấu khi nhảy -->
     <g id="beams">
@@ -339,6 +360,7 @@
     <!-- ông mặt trời -->
     <g id="sunWrap">
       <g id="sunGlow"><g class="glow-spin" id="glowRays" fill="#FFF6B0" opacity=".55"></g></g>
+      <circle r="125" fill="url(#sunHalo)"/>
       <g class="sun-rays" stroke="#FFB800" stroke-width="12" stroke-linecap="round">
         <line x1="0" y1="-78" x2="0" y2="-102"/><line x1="0" y1="78" x2="0" y2="102"/>
         <line x1="-78" y1="0" x2="-102" y2="0"/><line x1="78" y1="0" x2="102" y2="0"/>
@@ -375,8 +397,16 @@
       <ellipse cx="44" cy="16" rx="10" ry="6" fill="#B9C2DA"/>
     </g>
 
+    <path d="M-700 420 Q-300 330 120 410 T900 390 T1980 400 V700 H-700 Z" fill="#CFEFB6" opacity=".75"/>
     <path id="hills" d="M-700 450 Q-350 390 0 470 Q210 380 430 460 T860 450 T1280 430 T1980 445 V2200 H-700 Z"/>
     <rect id="ground" x="-700" y="540" width="2680" height="1700"/>
+    <rect x="-700" y="540" width="2680" height="300" fill="url(#groundShade)"/>
+    <g fill="none" stroke="#4FA83A" stroke-width="3.5" stroke-linecap="round" opacity=".55">
+      <path d="M-120 552 q4 -12 8 0 q4 -10 8 0"/><path d="M40 560 q4 -12 8 0 q4 -10 8 0"/><path d="M330 553 q4 -12 8 0 q4 -10 8 0"/>
+      <path d="M470 566 q4 -12 8 0 q4 -10 8 0"/><path d="M1000 560 q4 -12 8 0 q4 -10 8 0"/><path d="M1160 552 q4 -12 8 0 q4 -10 8 0"/>
+      <path d="M1380 562 q4 -12 8 0 q4 -10 8 0"/><path d="M1600 554 q4 -12 8 0 q4 -10 8 0"/>
+    </g>
+    <ellipse id="shadow" cx="470" cy="548" rx="60" ry="10" fill="#1D3A12" opacity=".22"/>
 
     <ellipse class="puddle" cx="540" cy="548" rx="70" ry="12" fill="#6FC3FF"/>
     <ellipse class="puddle" cx="1080" cy="550" rx="60" ry="11" fill="#6FC3FF"/>
@@ -385,9 +415,15 @@
     <g id="houseBob" class="beat">
       <rect x="882" y="228" width="40" height="80" fill="#C2554E" stroke="#5A3E2B" stroke-width="5"/>
       <rect x="660" y="345" width="320" height="195" rx="6" fill="#FFF1C1" stroke="#5A3E2B" stroke-width="6"/>
+      <rect x="663" y="348" width="314" height="190" fill="url(#wallShade)"/>
       <polygon points="626,355 820,196 1014,355" fill="#FF6B6B" stroke="#5A3E2B" stroke-width="6" stroke-linejoin="round"/>
+      <g fill="none" stroke="#D94B4B" stroke-width="3" stroke-linecap="round" opacity=".7">
+        <path d="M700 330 q12 10 24 0 q12 10 24 0 M760 288 q12 10 24 0 q12 10 24 0 M856 288 q12 10 24 0 q12 10 24 0 M892 330 q12 10 24 0 q12 10 24 0"/>
+      </g>
+      <path d="M646 338 L820 205 L835 216" fill="none" stroke="#FFB0A8" stroke-width="5" stroke-linecap="round" opacity=".8"/>
       <circle cx="820" cy="292" r="24" fill="#FFE38A" stroke="#5A3E2B" stroke-width="5"/>
       <rect id="win" x="700" y="385" width="92" height="82" rx="8" stroke="#5A3E2B" stroke-width="5"/>
+      <path d="M708 455 L730 393 M724 460 L748 393" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".45"/>
       <path d="M746 385 V467 M700 426 H792" stroke="#5A3E2B" stroke-width="4"/>
       <path d="M850 540 V452 A35 35 0 0 1 920 452 V540 Z" fill="#FFB347" stroke="#5A3E2B" stroke-width="5"/>
       <circle cx="906" cy="500" r="5" fill="#5A3E2B"/>
@@ -425,7 +461,7 @@
           <path d="M42 14 Q100 14 120 50"/>
           <path d="M32 30 Q80 60 92 96"/>
         </g>
-        <circle r="50" fill="#2B2540"/>
+        <circle r="50" fill="url(#spiderGrad)"/>
         <ellipse cx="-20" cy="-28" rx="15" ry="8" fill="#fff" opacity=".22" transform="rotate(-30 -20 -28)"/>
         <g transform="translate(0 -48)">
           <path d="M0 0 L-24 -13 L-24 13 Z" fill="#FF5FA2"/>
@@ -479,6 +515,8 @@
     <g id="notes" font-size="54" font-weight="800"></g>
     <g id="confetti"></g>
   </svg>
+  <div class="light"></div>
+  <div class="grain" id="grain"></div>
 
   <div class="cue" id="cue"><span class="cue-icon beat" id="cueIcon">💃</span><span class="cue-text" id="cueText"></span></div>
   <div class="title" id="title"></div>
@@ -538,7 +576,7 @@
      Đơn vị thời gian là nốt móc đơn (E giây). Nhịp 6/8: mỗi phách = 3 móc đơn.
      Mỗi câu hát = 1 slide = 2 ô nhịp = 12 móc đơn (len ghi đè khi khác).
      Âm tiết: [chữ, nốt, độ dài]; "/" ở đầu chữ = xuống dòng;
-     pick = số móc đơn hát lấy đà trước câu. */
+     pick = số móc đơn hát lấy đà trước câu; soft = câu nhẹ (bỏ trống, vd cảnh ru ngủ). */
   const E = 0.2, BEAT = 3 * E, LINE = 12;
   const NOTE = { G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880, C6:1046.5 };
   const CHORD = {
@@ -560,6 +598,13 @@
     dance:  { icon:'👏', text:'Nhún nhảy, vỗ tay bốp bốp!' },
     end:    { icon:'🤗', text:'Ôm một cái thật chặt!' },
   };
+
+  // Tiêu đề lớn chỉ hiện ở các cảnh có trong TITLES; nhãn nút phát lúc chưa hát
+  const TITLES = {
+    intro: '<span style="color:#FF7AB6">Chú</span> <span style="color:#FFE066">Nhện</span> <span style="color:#7FE3FF">Đen</span>',
+    end:   '<span>Bé</span> <span style="color:#FFE066">giỏi</span> <span style="color:#7FE3FF">quá!</span>',
+  };
+  const START_LABEL = 'Bấm để hát cùng Chú Nhện!';
 
   const INTRO = { scene:'intro', len:24, chords:'C C G G C C G G',
     syl:[['Một','tick',6],['hai','tick',6],['ba,','tick',6],['nhảy nào!','tick',5]] };
@@ -680,14 +725,19 @@
     L.chords.split(' ').forEach((c, b) => {
       const t = L.start + b * BEAT, C = CHORD[c];
       at(t, (d, w) => bass(d, w, C.bass[b % 2]));
-      if (b % 2 === 0) { at(t, (d, w) => kick(d, w)); at(t, (d, w) => pad(d, w, C.pad, BEAT * 2)); }
+      if (b % 2 === 0) at(t, (d, w) => pad(d, w, C.pad, BEAT * 2));
+      if (L.soft) return;                                // câu nhẹ: chỉ bass + pad, không trống
+      if (b % 2 === 0) at(t, (d, w) => kick(d, w));
       else at(t, (d, w) => clap(d, w, false));
     });
-    for (let e = 0; e < L.len; e++) at(L.start + e * E, (d, w) => shaker(d, w, e % 3 === 0));
+    const STEP = Math.round(BEAT / E);                   // móc đơn mỗi phách: 6/8 → 3, 4/4 → 2
+    if (!L.soft) for (let e = 0; e < L.len; e++) at(L.start + e * E, (d, w) => shaker(d, w, e % STEP === 0));
   });
   const TAIL = cursor * E;
+  const SOFT_END = lines[lines.length - 1].soft;         // bài kết bằng câu nhẹ thì hợp âm cuối cũng dịu
   at(TAIL, (d, w) => {
-    kick(d, w); crash(d, w); pad(d, w, CHORD.C.pad, 2.2);
+    if (!SOFT_END) { kick(d, w); crash(d, w); }
+    pad(d, w, CHORD.C.pad, 2.2);
     [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6].forEach(f => bell(d, w, f, 1.6));
   });
   events.sort((a, b) => a.t - b.t);
@@ -831,7 +881,7 @@
     $('overlay').hidden = playing;
     $('overlayIcon').innerHTML = `<path d="${state === 'ended' ? REPLAY_PATH : PLAY_PATH}"/>`;
     $('overlayLabel').textContent =
-      state === 'ended' ? 'Hát lại nào!' : state === 'paused' ? 'Hát tiếp nào!' : 'Bấm để hát cùng Chú Nhện!';
+      state === 'ended' ? 'Hát lại nào!' : state === 'paused' ? 'Hát tiếp nào!' : START_LABEL;
   }
 
   /* ================= CẢNH + LỜI KARAOKE ================= */
@@ -853,10 +903,8 @@
       $('cueIcon').textContent = SCENES[L.scene].icon;
       $('cueText').textContent = SCENES[L.scene].text;
       cue.classList.remove('pop'); void cue.offsetWidth; cue.classList.add('pop');
-      title.innerHTML = L.scene === 'end'
-        ? '<span>Bé</span> <span style="color:#FFE066">giỏi</span> <span style="color:#7FE3FF">quá!</span>'
-        : '<span style="color:#FF7AB6">Chú</span> <span style="color:#FFE066">Nhện</span> <span style="color:#7FE3FF">Đen</span>';
-      title.classList.toggle('show', L.scene === 'intro' || L.scene === 'end');
+      if (TITLES[L.scene]) title.innerHTML = TITLES[L.scene];
+      title.classList.toggle('show', !!TITLES[L.scene]);
     }
     rowsEl.innerHTML = '';
     let row = document.createElement('div');
@@ -901,7 +949,7 @@
 
   /* ================= CHÚ NHỆN ================= */
   const spider = $('spider'), squash = $('spiderSquash'), legsL = $('legsL'), legsR = $('legsR');
-  const pupils = $('pupils'), bubble = $('bubble'), bubbleIn = $('bubbleIn');
+  const pupils = $('pupils'), bubble = $('bubble'), bubbleIn = $('bubbleIn'), shadow = $('shadow');
   const disp = { x:470, y:470, s:1 };
   let poke = 0, pokeMood = 0;
 
@@ -975,6 +1023,10 @@
     legsR.setAttribute('transform', `rotate(${(-P.leg).toFixed(1)} 35 5)`);
     pupils.setAttribute('transform', `translate(${P.lx.toFixed(1)} ${P.ly.toFixed(1)})`);
     bubble.setAttribute('transform', `translate(${(disp.x + 60 * disp.s).toFixed(1)} ${(y - 95 * disp.s).toFixed(1)})`);
+    const near = clamp01(1 - (548 - (y + 75 * disp.s)) / 240);
+    shadow.setAttribute('cx', disp.x.toFixed(1));
+    shadow.setAttribute('rx', (70 * disp.s * (.45 + .55 * near)).toFixed(1));
+    shadow.setAttribute('opacity', (.24 * near).toFixed(3));
 
     if (pokeMood > 0) pokeMood -= dt;
     spider.dataset.mood = pokeMood > 0 ? 'happy' : P.mood;
@@ -1069,6 +1121,25 @@
     else if (e.key === 'ArrowLeft') jump(-1);
     else if (e.key === 'f' || e.key === 'F') toggleFull();
   });
+
+  /* ================= CHẤT LIỆU GIẤY ================= */
+  // Hạt giấy + vài sợi xơ, tạo một lần (không tốn CPU mỗi khung hình)
+  (() => {
+    const N = 200, c = document.createElement('canvas');
+    c.width = c.height = N;
+    const x = c.getContext('2d'), img = x.createImageData(N, N);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = 205 + Math.random() * 50;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    x.strokeStyle = 'rgba(120,100,80,.18)'; x.lineWidth = .7;
+    for (let i = 0; i < 26; i++) {
+      const a = Math.random() * N, b = Math.random() * N, l = 6 + Math.random() * 14, r = Math.random() * Math.PI;
+      x.beginPath(); x.moveTo(a, b); x.lineTo(a + Math.cos(r) * l, b + Math.sin(r) * l); x.stroke();
+    }
+    $('grain').style.backgroundImage = `url(${c.toDataURL()})`;
+  })();
 
   /* ================= VÒNG LẶP KHUNG HÌNH ================= */
   let lastTs = 0;

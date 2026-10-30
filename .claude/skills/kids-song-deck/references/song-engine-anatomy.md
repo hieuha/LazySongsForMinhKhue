@@ -12,6 +12,7 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 | hiệu ứng riêng (`#alarm`, `#sunGlow`, `#twinkles`…) | THAY | Thêm/bớt theo bài |
 | `/* ---------- nét mặt ... ---------- */` | THAY/GIỮ | Cơ chế `data-mood` (smile, grin, wow, happy) giữ được cho nhân vật mới |
 | `/* ---------- keyframes ---------- */` | GIỮ, thêm | Animation theo phách dùng `var(--beat)` + `animation-delay: var(--sync)` và có class `beat` để tự khớp nhịp khi tua |
+| `/* ---------- chất liệu tranh ---------- */` (`.light`, `.grain`) | GIỮ | Lớp phủ nắng mềm + viền tối, hạt giấy (z-index 1, không bắt chạm). HTML: `<div class="light">`, `<div class="grain" id="grain">` ngay sau `</svg>` |
 | `/* ---------- lớp HTML trên sân khấu ---------- */` | GIỮ | Thẻ gợi ý (ngang: trên trái; dọc: sát mép trên, rộng hết), tiêu đề, thanh lời karaoke (dọc: tự xuống dòng), nút (ngang: trên phải; **dọc: hàng dưới đáy**, dưới thanh lời), lớp phủ nút phát. Chừa tai thỏ/Dynamic Island: ngang cộng `env(safe-area-inset-left/right)`; dọc trên máy cảm ứng thẻ chỉ dẫn `top: max(3cqw + safe-top, 56px)`, tiêu đề `24cqw + 56px`; hàng nút dọc cộng `safe-area-inset-bottom` |
 | `/* ---------- hướng dẫn cho bố mẹ ---------- */` | GIỮ | |
 
@@ -30,13 +31,14 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 
 | Mục | Loại | Việc cần làm |
 |---|---|---|
-| `BÀI HÁT` | THAY | `E` (giây/móc đơn), `BEAT`, `LINE`; `NOTE` (thêm nốt: `440 * 2 ** ((midi - 69) / 12)`); `CHORD` (thêm hợp âm: `bass` [gốc, quãng 5], `pad` 3 nốt quãng 4); `SCENES` (icon + gợi ý động tác); `INTRO`, `VERSE`, `DANCE`, `OUTRO`, `SONG` |
+| `BÀI HÁT` | THAY | `E` (giây/móc đơn), `BEAT` (6/8: `3*E`, 4/4: `2*E`), `LINE`; `TITLES` (cảnh nào hiện tiêu đề lớn → HTML), `START_LABEL` (nhãn nút phát); `NOTE` (thêm nốt: `440 * 2 ** ((midi - 69) / 12)`); `CHORD` (thêm hợp âm: `bass` [gốc, quãng 5], `pad` 3 nốt quãng 4); `SCENES` (icon + gợi ý động tác); `INTRO`, `VERSE`, `DANCE`, `OUTRO`, `SONG` |
 | `ÂM THANH` | GIỮ | Nhạc cụ: `bell` (giai điệu), `bass`, `pad`, `kick`, `clap`, `shaker`, `tick`, `crash`, `boing`. Nốt đặc biệt trong lời: `'tick'` (đếm nhịp), `'clap'` (vỗ tay) |
 | `TRẠNG THÁI PHÁT` | GIỮ | play/pause/jump theo cảnh, lập lịch Web Audio |
 | `CẢNH + LỜI KARAOKE` | GIỮ | Chỉ sửa chuỗi tiêu đề mở đầu/kết trong `showLine` |
 | `CHÚ NHỆN` → `pose()` | THAY | Mỗi cảnh trả `{x, y, r, s, sq, leg, lx, ly, mood}`. `lb` = số phách từ đầu câu (dùng cho chuyển động theo lời), `bp` = phách tổng (nhún nhảy), `hop`/`sway` = sóng theo phách. Nhân vật được làm mượt khi đổi cảnh |
 | `TRANG TRÍ SINH BẰNG JS` | THAY/GIỮ | |
 | `CHẾ ĐỘ NGANG / DỌC` | GIỮ | `mode` lưu ở localStorage `lazysongs-display-mode` (chung mọi bài); nút `#btnMode`; khi bấm phát trên máy cảm ứng: vào toàn màn hình + `screen.orientation.lock` (Android), iPhone dùng xoay CSS. `updateCamera()` đặt `viewBox` theo tỷ lệ sân khấu: ngang rộng hơn 16:9 → giữ cao 720, mở rộng hai bên; vuông hơn → mở thêm trời; dọc → khung rộng 520 bám theo `disp.x` của nhân vật. Cả hai chế độ đặt `GROUND_Y` (590, dưới chân nhân vật lớn nhất) ngay tại mép trên thanh lời, đọc từ `lyricsEl.offsetTop` mỗi khung hình và làm mượt (`cam.ground`) — lời 2 dòng thì camera tự lùi/dời, không che nhân vật |
+| `CHẤT LIỆU GIẤY` | GIỮ | Vẽ hạt giấy bằng canvas một lần lúc tải trang |
 | `TƯƠNG TÁC`, `VÒNG LẶP` | GIỮ | Toạ độ chạm đã đổi về hệ sân khấu khi sân khấu đang xoay 90° |
 
 ## Định dạng dữ liệu câu hát
@@ -49,9 +51,23 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 - `syl`: `[chữ, nốt | 'tick' | 'clap', độ dài móc đơn]`; chữ bắt đầu bằng `/` = xuống dòng (dùng cho câu dài).
 - `pick`: âm tiết đầu bắt đầu sớm `|pick|` móc đơn (nốt lấy đà).
 - `len`: mặc định `LINE` (12 = 2 ô nhịp 6/8). Đoạn mở đầu/nhảy/kết thường `len:24`.
-- `chords`: số hợp âm = `len / 3` (mỗi phách 6/8 một hợp âm). Phách chẵn có kick + pad, phách lẻ có clap nhẹ.
+- `chords`: mỗi phách một hợp âm (số hợp âm = `len / (BEAT/E)`). Phách chẵn có kick + pad, phách lẻ có clap nhẹ; shaker mỗi móc đơn, nhấn ở đầu phách (`STEP = BEAT/E`).
+- `soft: true`: câu nhẹ (ru ngủ) — chỉ bass + pad, không trống; nếu câu cuối là `soft` thì hợp âm kết cũng dịu (không kick/crash).
+- Trường tuỳ ý cho riêng bài (vd `v` = số khỉ đã ngã) được giữ nguyên trong `lines[]`, dùng trong hàm tư thế.
 - Kiểm tra: `pick + tổng độ dài ≤ len` và không chồng lên `pick` của câu kế.
-- Với 4/4: đặt `BEAT = 2 * E` hoặc đổi E thành móc đơn 4/4, sửa `b % 2` trong vòng dựng sự kiện cho đúng phách mạnh, và `chords` = `len / (BEAT/E)` hợp âm.
+- Với 4/4: `BEAT = 2 * E`, `LINE = 16` (2 ô nhịp). Engine tự tính shaker/hợp âm theo `BEAT/E`, không cần sửa vòng dựng sự kiện.
+
+## Nhiều nhân vật (vd 5 chú khỉ + mẹ + bác sĩ)
+
+- Vẽ **một khuôn** nhân vật trong `<defs>` (`<g id="mkProto" class="mk">`, gốc ở tâm thân, bàn chân ở y = +53), JS `cloneNode` cho từng nhân vật rồi đổi màu phụ kiện (khăn), gắn thêm phụ kiện (nơ, điện thoại, áo bác sĩ) từ các nhóm mẫu trong `<defs>`.
+- Nét mặt theo `data-mood` trên từng bản sao; trạng thái phụ (`bumped`, `healed`) bằng class.
+- Một hàm tư thế `pose(i, L, lb, bp, clock)` trả `{x, feet, s, lift, r, arm, mood, …}`; vòng vẽ làm mượt x/feet/s, đặt bóng đổ, ghép transform. Các nhân vật nhảy lệch nhau 1/4 phách cho vui mắt.
+- Camera dọc: đặt `disp.x` cố định vào giữa nhóm (engine đọc `disp.x`).
+- Mỗi bản sao có vùng chạm riêng (`.mk-hit`) → nhân vật đó nhảy lộn + "Hihi!".
+
+## Ảnh bìa
+
+`songs/covers/<n>.<slug>.svg` — trích nguyên khối markup nhân vật + gradient từ file bài (tìm khối `<g …>` cân bằng), đặt lên nền 320×200, thêm `<style>` ẩn các nét mặt khác. Xem guide mục 12.
 
 ## Toạ độ (thế giới chuẩn 1280×720)
 
