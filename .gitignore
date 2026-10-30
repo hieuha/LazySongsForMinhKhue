@@ -71,9 +71,11 @@ prompt.md
 ck.md
 
 # Generated runtime layout for release/install smoke tests
-/.claude/
-# But track repo-level rules that Claude Code reads
-!/.claude/rules/
+/.claude/*
+# But track project skills written for this repo
+!/.claude/skills/
+/.claude/skills/*
+!/.claude/skills/kids-song-deck/
 
 # Local-only state inside tracked claude source
 claude/agent-memory/
@@ -96,3 +98,6 @@ external/
 
 # Git worktrees (local development only)
 worktrees/
+
+# ClaudeKit examples are not part of this repo
+/.claude/**/.env.example
