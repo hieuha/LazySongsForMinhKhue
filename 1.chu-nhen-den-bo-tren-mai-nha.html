@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chú Nhện Đen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#2B2540; --pink:#FF3D7F; --beat:.6s; --sync:0s; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:#1F1A33; display:grid; place-items:center;
+    min-height:100vh; min-height:100dvh; overflow:hidden;
+    font-family:"Baloo 2",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* sân khấu 16:9 luôn vừa màn hình; mọi kích thước con tính theo cqw */
+  .stage{
+    position:relative; width:min(100vw,177.78vh); aspect-ratio:16/9;
+    overflow:hidden; border-radius:18px; container-type:inline-size;
+    user-select:none; -webkit-user-select:none; touch-action:manipulation;
+    background:#8ED8FF;
+  }
+  @supports (height:100dvh){ .stage{width:min(100vw,177.78dvh)} }
+  :fullscreen .stage{border-radius:0}
+  .world{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  /* ---------- trạng thái từng cảnh ---------- */
+  /* 8 cảnh theo lời: meet → climb → rain → wash → clear → sun → back → climb2 */
+  #sky{fill:#8ED8FF;transition:fill 1.2s ease}
+  .world[data-scene=rain]   #sky,
+  .world[data-scene=wash]   #sky{fill:#7083B3}
+  .world[data-scene=clear]  #sky{fill:#B4CDEB}
+  .world[data-scene=sun]    #sky{fill:#FFD98C}
+  .world[data-scene=back]   #sky,
+  .world[data-scene=climb2] #sky{fill:#9FE0FF}
+  .world[data-scene=dance]  #sky{fill:#B9A2FF}
+  .world[data-scene=end]    #sky{fill:#FFB6D5}
+
+  #hills{fill:#A6E37F;transition:fill 1.2s} #ground{fill:#7BD957;transition:fill 1.2s}
+  .world[data-scene=rain] #hills,.world[data-scene=wash] #hills{fill:#8CC56E}
+  .world[data-scene=rain] #ground,.world[data-scene=wash] #ground{fill:#62BC48}
+
+  #sunWrap{transform:translate(1130px,150px) scale(.8);transition:transform 1.4s cubic-bezier(.34,1.4,.64,1)}
+  .world[data-scene=rain]  #sunWrap,
+  .world[data-scene=wash]  #sunWrap{transform:translate(1130px,860px) scale(.8)}
+  .world[data-scene=clear] #sunWrap{transform:translate(330px,470px) scale(1.1)}
+  .world[data-scene=sun]   #sunWrap{transform:translate(330px,300px) scale(1.6)}
+  .sun-rays{transform-box:fill-box;transform-origin:center;animation:spin 24s linear infinite}
+  .sun-body{transform-box:fill-box;transform-origin:center;animation:pulse var(--beat) ease-in-out infinite;animation-delay:var(--sync)}
+  /* muôn ngàn tia nắng: chùm tia dài quanh mặt trời + sao lấp lánh khắp trời */
+  #sunGlow{opacity:0;transition:opacity 1s}
+  .world[data-scene=sun] #sunGlow{opacity:1}
+  .glow-spin{transform-box:fill-box;transform-origin:center;animation:spin 40s linear infinite}
+  #twinkles{opacity:0;transition:opacity .8s}
+  .world[data-scene=sun] #twinkles{opacity:1}
+  .tw{transform-box:fill-box;transform-origin:center;animation:twinkle 1.6s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{transform:scale(.2) rotate(0);opacity:0}50%{transform:scale(1) rotate(45deg);opacity:1}}
+
+  /* nhện giật mình khi mưa tới */
+  #alarm{opacity:0;transform:scale(0);transform-box:fill-box;transform-origin:50% 100%;
+         transition:opacity .15s,transform .35s cubic-bezier(.34,1.8,.64,1)}
+  .world[data-scene=rain] #alarm{opacity:1;transform:scale(1);animation:shake .3s ease-in-out infinite}
+  @keyframes shake{0%,100%{rotate:-8deg}50%{rotate:8deg}}
+  .eyes-open{transform-box:fill-box;transform-origin:center;transition:transform .2s}
+  #spider[data-mood=wow] .eyes-open{transform:scale(1.25)}
+
+  #shades{opacity:0;transition:opacity .4s}
+  .world[data-scene=dance] #shades{opacity:1}
+
+  #clouds{transition:opacity 1s}
+  .world[data-scene=rain] #clouds,.world[data-scene=wash] #clouds{opacity:.35}
+  .drift{animation:drift 9s ease-in-out infinite}
+  .drift.slow{animation-duration:13s;animation-delay:-4s}
+
+  /* mây mưa bay vào khi mưa, bay đi tiếp sang phải khi trời tạnh */
+  #rainCloud{transform:translate(-320px,105px) scale(1.25);transition:transform 1.2s cubic-bezier(.34,1.3,.64,1)}
+  .world[data-scene=rain]  #rainCloud,
+  .world[data-scene=wash]  #rainCloud{transform:translate(810px,105px) scale(1.25)}
+  .world[data-scene=clear] #rainCloud,
+  .world[data-scene=sun]   #rainCloud{transform:translate(1650px,105px) scale(1.25);transition-duration:2.4s}
+
+  #rain{opacity:0;transition:opacity .5s}
+  .world[data-scene=rain] #rain,.world[data-scene=wash] #rain{opacity:1}
+  .drop{animation:fall .9s linear infinite}
+
+  .puddle{transform-box:fill-box;transform-origin:center;transform:scale(0);transition:transform 2.5s ease}
+  .world[data-scene=rain] .puddle,.world[data-scene=wash] .puddle,
+  .world[data-scene=clear] .puddle{transform:scale(1)}
+
+  #rainbow{opacity:0;transition:opacity 1.2s}
+  /* cầu vồng hiện ra ngay khi trời tạnh */
+  .world[data-scene=clear] #rainbow{opacity:.85;transition:opacity 2s .5s}
+  .world[data-scene=sun]    #rainbow,
+  .world[data-scene=back]   #rainbow,
+  .world[data-scene=climb2] #rainbow,
+  .world[data-scene=dance]  #rainbow,
+  .world[data-scene=end]    #rainbow{opacity:.85}
+
+  #win{fill:#8ED8FF;transition:fill .8s}
+  .world[data-scene=rain] #win,.world[data-scene=wash] #win{fill:#FFE38A}
+
+  #houseBob{transform-box:fill-box;transform-origin:50% 100%}
+  .world[data-scene=dance] #houseBob,
+  .world[data-scene=end]   #houseBob{animation:squish var(--beat) ease-in-out infinite;animation-delay:var(--sync)}
+
+  .flower{transform-box:fill-box;transform-origin:50% 100%;
+          animation:sway calc(var(--beat)*2) ease-in-out infinite;animation-delay:var(--sync)}
+
+  #beams,#notes,#confetti{opacity:0;transition:opacity .8s}
+  .world[data-scene=dance] #beams{opacity:.45}
+  .world[data-scene=dance] #notes{opacity:1}
+  .world[data-scene=dance] #confetti,
+  .world[data-scene=end]   #confetti{opacity:1}
+  .beam{transform-box:fill-box;transform-origin:50% 0;animation:sweep calc(var(--beat)*4) ease-in-out infinite;animation-delay:var(--sync)}
+  .beam.b2{animation-direction:reverse}
+  .cf{transform-box:fill-box;transform-origin:center;animation:confetti 4s linear infinite}
+  .note-f{animation:rise 3s ease-out infinite}
+
+  /* ---------- nét mặt chú nhện ---------- */
+  .eyes-happy,.m-wow,.m-grin{opacity:0}
+  #spider[data-mood=wow]   .m-smile{opacity:0}
+  #spider[data-mood=wow]   .m-wow{opacity:1}
+  #spider[data-mood=grin]  .m-smile{opacity:0}
+  #spider[data-mood=grin]  .m-grin{opacity:1}
+  #spider[data-mood=happy] .eyes-open{opacity:0}
+  #spider[data-mood=happy] .eyes-happy{opacity:1}
+  #spider[data-mood=happy] .m-smile{opacity:0}
+  #spider[data-mood=happy] .m-grin{opacity:1}
+  .blink{transform-box:fill-box;transform-origin:center;animation:blink 4.2s infinite}
+  #spiderHit{cursor:pointer}
+  #bubbleIn{opacity:0;transform:scale(.3);transform-box:fill-box;transform-origin:0 100%;
+            transition:opacity .2s,transform .3s cubic-bezier(.34,1.56,.64,1)}
+  #bubbleIn.show{opacity:1;transform:scale(1)}
+
+  /* ---------- keyframes ---------- */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{transform:scale(1.07)}50%{transform:scale(1)}}
+  @keyframes drift{0%,100%{transform:translateX(-28px)}50%{transform:translateX(28px)}}
+  @keyframes fall{from{transform:translateY(-40px)}to{transform:translateY(400px)}}
+  @keyframes squish{0%,100%{transform:scale(1.03,.96)}50%{transform:scale(1,1.02)}}
+  @keyframes sway{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+  @keyframes sweep{0%,100%{transform:rotate(-22deg)}50%{transform:rotate(22deg)}}
+  @keyframes confetti{from{transform:translateY(-60px) rotate(0)}to{transform:translateY(800px) rotate(540deg)}}
+  @keyframes rise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-320px);opacity:0}}
+  @keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+  @keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-.6cqw)}}
+  @keyframes pop{0%{transform:scale(.4) rotate(-8deg)}70%{transform:scale(1.08)}100%{transform:none}}
+  @keyframes wobble{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg) scale(1.04)}}
+  @keyframes ring{from{transform:scale(1);opacity:.7}to{transform:scale(1.6);opacity:0}}
+  @keyframes sparkle{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}
+                     100%{transform:translate(-50%,-180%) scale(1.5) rotate(25deg);opacity:0}}
+
+  /* khi phát lại từ một mốc, khởi động lại các animation theo phách cho khớp nhạc */
+  .resync .beat{animation:none !important}
+  .stage.paused .world *{animation-play-state:paused !important}
+
+  /* ---------- lớp HTML trên sân khấu ---------- */
+  .cue{
+    position:absolute; left:2cqw; top:2cqw; z-index:3; pointer-events:none;
+    display:flex; align-items:center; gap:1.2cqw; max-width:44cqw;
+    padding:.8cqw 2cqw .8cqw 1.2cqw; background:#fff; border-radius:3cqw;
+    box-shadow:0 .5cqw 0 rgba(43,37,64,.18);
+  }
+  .cue.pop{animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+  .cue-icon{font-size:4.6cqw;line-height:1;animation:hop var(--beat) ease-in-out infinite;animation-delay:var(--sync)}
+  .cue-text{font-size:2.4cqw;font-weight:800;line-height:1.15;color:var(--ink)}
+
+  .title{
+    position:absolute; left:4cqw; top:12cqw; z-index:5; pointer-events:none;
+    font-size:8cqw; font-weight:800; line-height:1; color:#fff;
+    -webkit-text-stroke:.6cqw var(--ink); paint-order:stroke fill;
+    opacity:0; transform:scale(.5) rotate(-8deg);
+    transition:opacity .4s, transform .6s cubic-bezier(.34,1.56,.64,1);
+  }
+  .title.show{opacity:1;transform:none}
+  .title.show span{display:inline-block;animation:wobble 2.4s ease-in-out infinite}
+  .title.show span:nth-child(2){animation-delay:-.8s}
+  .title.show span:nth-child(3){animation-delay:-1.6s}
+
+  .lyrics{
+    position:absolute; left:3cqw; right:3cqw; bottom:1.6cqw; z-index:3; pointer-events:none;
+    padding:2.8cqw 2cqw 1.1cqw; text-align:center; background:rgba(255,255,255,.93);
+    border-radius:3cqw; box-shadow:0 .6cqw 0 rgba(43,37,64,.2);
+    font-size:3.6cqw; font-weight:800; line-height:1.25; color:#B3A9CF;
+  }
+  .row{white-space:nowrap}
+  .syl{display:inline-block;padding:0 .24em;transition:transform .15s,color .15s}
+  .syl.done{color:var(--ink)}
+  .syl.on{color:var(--pink);transform:translateY(-.1em) scale(1.2)}
+  .ball{position:absolute;left:0;top:0;width:3.4cqw;height:3.4cqw;margin:-3.3cqw 0 0 -1.7cqw}
+  .ball svg{width:100%;height:100%;display:block}
+
+  .controls{position:absolute;right:2cqw;top:2cqw;z-index:6;display:flex;gap:.8cqw}
+  .controls button{
+    width:5cqw; height:5cqw; border:0; border-radius:50%; padding:0; cursor:pointer;
+    display:grid; place-items:center; background:#fff; color:var(--ink);
+    box-shadow:0 .4cqw 0 rgba(43,37,64,.22); transition:transform .15s;
+  }
+  .controls button:hover{transform:scale(1.08)}
+  .controls button:active{transform:scale(.94)}
+  .controls svg{width:2.4cqw;height:2.4cqw;fill:currentColor}
+  .controls .main{background:var(--pink);color:#fff}
+
+  .overlay{
+    position:absolute; inset:0; z-index:4; border:0; padding:0; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2cqw;
+    background:rgba(43,37,64,.28); font:inherit;
+  }
+  .overlay[hidden]{display:none}
+  .big-play{position:relative;width:16cqw;height:16cqw;border-radius:50%;background:var(--pink);
+            display:grid;place-items:center;box-shadow:0 1cqw 0 rgba(0,0,0,.2)}
+  .big-play::before,.big-play::after{content:"";position:absolute;inset:0;border-radius:50%;
+            border:.8cqw solid #fff;animation:ring 1.6s ease-out infinite}
+  .big-play::after{animation-delay:.8s}
+  .big-play svg{width:7cqw;height:7cqw;fill:#fff}
+  .overlay-label{font-size:3.6cqw;font-weight:800;color:#fff;-webkit-text-stroke:.45cqw var(--ink);paint-order:stroke fill}
+
+  .sparkle{position:absolute;z-index:7;pointer-events:none;font-size:4.5cqw;
+           animation:sparkle .9s ease-out forwards}
+
+  /* ---------- hướng dẫn cho bố mẹ ---------- */
+  dialog{max-width:min(720px,92vw);border:0;border-radius:20px;padding:24px 28px;color:var(--ink);
+         font-family:inherit;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  dialog::backdrop{background:rgba(20,16,36,.6)}
+  dialog h2{margin:0 0 8px;font-size:28px}
+  dialog h3{margin:18px 0 6px;font-size:20px}
+  dialog ol,dialog ul{margin:0;padding-left:22px;line-height:1.6;font-size:17px}
+  dialog li b{color:var(--pink)}
+  dialog .close{float:right;border:0;background:var(--pink);color:#fff;font:inherit;font-weight:800;
+                font-size:16px;padding:6px 16px;border-radius:999px;cursor:pointer}
+
+  @media (prefers-reduced-motion: reduce){
+    .world *,.cue-icon,.title span{animation:none !important}
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <svg class="world" id="world" viewBox="0 0 1280 720" data-scene="intro"
+       role="img" aria-label="Chú nhện đen leo lên mái nhà, gặp mưa rồi gặp nắng">
+    <defs>
+      <symbol id="drop" viewBox="-12 -8 24 34">
+        <path d="M0 -6 C8 4 10 12 0 24 C-10 12 -8 4 0 -6" fill="#4FB3FF"/>
+      </symbol>
+      <symbol id="flower" viewBox="-30 -80 60 82">
+        <path d="M0 0 V-46" stroke="#3F9E3A" stroke-width="5" stroke-linecap="round"/>
+        <ellipse cx="9" cy="-20" rx="10" ry="5" fill="#3F9E3A" transform="rotate(-30 9 -20)"/>
+        <g fill="currentColor">
+          <circle cx="0" cy="-66" r="10"/><circle cx="12" cy="-57" r="10"/>
+          <circle cx="8" cy="-43" r="10"/><circle cx="-8" cy="-43" r="10"/>
+          <circle cx="-12" cy="-57" r="10"/>
+        </g>
+        <circle cx="0" cy="-54" r="8" fill="#FFD23F"/>
+      </symbol>
+      <symbol id="cloud" viewBox="-120 -80 240 150">
+        <g fill="currentColor">
+          <circle cx="-62" cy="12" r="42"/><circle cx="0" cy="-12" r="56"/>
+          <circle cx="62" cy="12" r="42"/><rect x="-104" y="12" width="208" height="46" rx="23"/>
+        </g>
+      </symbol>
+      <symbol id="mini" viewBox="-60 -60 120 120">
+        <g stroke="#2B2540" stroke-width="7" stroke-linecap="round" fill="none">
+          <path d="M-18 -8 L-44 -30"/><path d="M-22 4 L-50 -4"/><path d="M-22 14 L-48 24"/><path d="M-16 22 L-36 44"/>
+          <path d="M18 -8 L44 -30"/><path d="M22 4 L50 -4"/><path d="M22 14 L48 24"/><path d="M16 22 L36 44"/>
+        </g>
+        <circle r="28" fill="#2B2540"/>
+        <circle cx="-10" cy="-4" r="9" fill="#fff"/><circle cx="10" cy="-4" r="9" fill="#fff"/>
+        <circle cx="-9" cy="-3" r="4.5" fill="#1E1A30"/><circle cx="11" cy="-3" r="4.5" fill="#1E1A30"/>
+        <path d="M-7 10 Q0 16 7 10" stroke="#FF8FB1" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      </symbol>
+    </defs>
+
+    <rect id="sky" width="1280" height="720"/>
+
+    <!-- đèn sân khấu khi nhảy -->
+    <g id="beams">
+      <polygon class="beam beat"    points="300,-20 200,620 400,620" fill="#FF7AB6"/>
+      <polygon class="beam b2 beat" points="640,-20 540,620 740,620" fill="#FFE066"/>
+      <polygon class="beam beat"    points="980,-20 880,620 1080,620" fill="#7FE3FF"/>
+    </g>
+
+    <g id="rainbow" fill="none" stroke-width="28">
+      <path d="M390 540 A430 430 0 0 1 1250 540" stroke="#FF5A5A"/>
+      <path d="M418 540 A402 402 0 0 1 1222 540" stroke="#FF9F43"/>
+      <path d="M446 540 A374 374 0 0 1 1194 540" stroke="#FFD23F"/>
+      <path d="M474 540 A346 346 0 0 1 1166 540" stroke="#5BD66B"/>
+      <path d="M502 540 A318 318 0 0 1 1138 540" stroke="#4FB3FF"/>
+      <path d="M530 540 A290 290 0 0 1 1110 540" stroke="#9B6BFF"/>
+    </g>
+
+    <!-- ông mặt trời -->
+    <g id="sunWrap">
+      <g id="sunGlow"><g class="glow-spin" id="glowRays" fill="#FFF6B0" opacity=".55"></g></g>
+      <g class="sun-rays" stroke="#FFB800" stroke-width="12" stroke-linecap="round">
+        <line x1="0" y1="-78" x2="0" y2="-102"/><line x1="0" y1="78" x2="0" y2="102"/>
+        <line x1="-78" y1="0" x2="-102" y2="0"/><line x1="78" y1="0" x2="102" y2="0"/>
+        <line x1="-55" y1="-55" x2="-72" y2="-72"/><line x1="55" y1="-55" x2="72" y2="-72"/>
+        <line x1="-55" y1="55" x2="-72" y2="72"/><line x1="55" y1="55" x2="72" y2="72"/>
+      </g>
+      <g class="sun-body beat">
+        <circle r="62" fill="#FFD23F" stroke="#FFB800" stroke-width="5"/>
+        <ellipse cx="-20" cy="-10" rx="7" ry="10" fill="#3A2A1A"/>
+        <ellipse cx="20" cy="-10" rx="7" ry="10" fill="#3A2A1A"/>
+        <ellipse cx="-34" cy="14" rx="10" ry="6" fill="#FF9AA2"/>
+        <ellipse cx="34" cy="14" rx="10" ry="6" fill="#FF9AA2"/>
+        <path d="M-20 14 Q0 36 20 14" fill="none" stroke="#3A2A1A" stroke-width="5" stroke-linecap="round"/>
+        <g id="shades" fill="#1E1A30">
+          <rect x="-40" y="-24" width="34" height="24" rx="10"/>
+          <rect x="6" y="-24" width="34" height="24" rx="10"/>
+          <rect x="-8" y="-18" width="16" height="5"/>
+        </g>
+      </g>
+    </g>
+
+    <g id="clouds">
+      <g transform="translate(560 95)"><g class="drift"><use href="#cloud" x="-100" y="-62" width="200" height="125" color="#FFFFFF"/></g></g>
+      <g transform="translate(860 200)"><g class="drift slow"><use href="#cloud" x="-70" y="-44" width="140" height="88" color="#FFFFFF"/></g></g>
+    </g>
+
+    <!-- mây mưa -->
+    <g id="rainCloud">
+      <use href="#cloud" x="-120" y="-80" width="240" height="150" color="#8C98B8"/>
+      <path d="M-34 -2 Q-24 -12 -14 -2" fill="none" stroke="#2B2540" stroke-width="5" stroke-linecap="round"/>
+      <path d="M14 -2 Q24 -12 34 -2" fill="none" stroke="#2B2540" stroke-width="5" stroke-linecap="round"/>
+      <ellipse cx="0" cy="22" rx="9" ry="11" fill="#2B2540"/>
+      <ellipse cx="-44" cy="16" rx="10" ry="6" fill="#B9C2DA"/>
+      <ellipse cx="44" cy="16" rx="10" ry="6" fill="#B9C2DA"/>
+    </g>
+
+    <path id="hills" d="M0 470 Q210 380 430 460 T860 450 T1280 430 V720 H0 Z"/>
+    <rect id="ground" y="540" width="1280" height="180"/>
+
+    <ellipse class="puddle" cx="540" cy="548" rx="70" ry="12" fill="#6FC3FF"/>
+    <ellipse class="puddle" cx="1080" cy="550" rx="60" ry="11" fill="#6FC3FF"/>
+
+    <!-- ngôi nhà + ống máng cho nhện leo -->
+    <g id="houseBob" class="beat">
+      <rect x="882" y="228" width="40" height="80" fill="#C2554E" stroke="#5A3E2B" stroke-width="5"/>
+      <rect x="660" y="345" width="320" height="195" rx="6" fill="#FFF1C1" stroke="#5A3E2B" stroke-width="6"/>
+      <polygon points="626,355 820,196 1014,355" fill="#FF6B6B" stroke="#5A3E2B" stroke-width="6" stroke-linejoin="round"/>
+      <circle cx="820" cy="292" r="24" fill="#FFE38A" stroke="#5A3E2B" stroke-width="5"/>
+      <rect id="win" x="700" y="385" width="92" height="82" rx="8" stroke="#5A3E2B" stroke-width="5"/>
+      <path d="M746 385 V467 M700 426 H792" stroke="#5A3E2B" stroke-width="4"/>
+      <path d="M850 540 V452 A35 35 0 0 1 920 452 V540 Z" fill="#FFB347" stroke="#5A3E2B" stroke-width="5"/>
+      <circle cx="906" cy="500" r="5" fill="#5A3E2B"/>
+      <path d="M885 470 c-6 -8 -18 -2 -10 8 l10 9 l10 -9 c8 -10 -4 -16 -10 -8z" fill="#FF6B8B"/>
+      <rect x="616" y="349" width="62" height="14" rx="7" fill="#4FA3E0" stroke="#2E6DA4" stroke-width="3"/>
+      <rect x="628" y="356" width="22" height="182" rx="6" fill="#4FA3E0" stroke="#2E6DA4" stroke-width="3"/>
+      <rect x="610" y="526" width="40" height="14" rx="7" fill="#4FA3E0" stroke="#2E6DA4" stroke-width="3"/>
+    </g>
+
+    <g>
+      <g class="flower beat"><use href="#flower" x="60"   y="470" width="60" height="82" color="#FF7AB6"/></g>
+      <g class="flower beat"><use href="#flower" x="150"  y="482" width="52" height="70" color="#B98CFF"/></g>
+      <g class="flower beat"><use href="#flower" x="250"  y="470" width="60" height="82" color="#FF9F43"/></g>
+      <g class="flower beat"><use href="#flower" x="1050" y="472" width="56" height="78" color="#FF5A5A"/></g>
+      <g class="flower beat"><use href="#flower" x="1130" y="482" width="52" height="70" color="#FF7AB6"/></g>
+      <g class="flower beat"><use href="#flower" x="1205" y="470" width="60" height="82" color="#B98CFF"/></g>
+    </g>
+
+    <!-- chú nhện: vị trí/tư thế do JS điều khiển theo nhạc -->
+    <g id="spider" data-mood="smile">
+      <g id="spiderSquash">
+        <g id="legsL" fill="none" stroke="#2B2540" stroke-width="10" stroke-linecap="round">
+          <path d="M-28 -14 Q-70 -70 -102 -44"/>
+          <path d="M-40 -2 Q-96 -34 -124 -4"/>
+          <path d="M-42 14 Q-100 14 -120 50"/>
+          <path d="M-32 30 Q-80 60 -92 96"/>
+        </g>
+        <g id="legsR" fill="none" stroke="#2B2540" stroke-width="10" stroke-linecap="round">
+          <path d="M28 -14 Q70 -70 102 -44"/>
+          <path d="M40 -2 Q96 -34 124 -4"/>
+          <path d="M42 14 Q100 14 120 50"/>
+          <path d="M32 30 Q80 60 92 96"/>
+        </g>
+        <circle r="50" fill="#2B2540"/>
+        <ellipse cx="-20" cy="-28" rx="15" ry="8" fill="#fff" opacity=".22" transform="rotate(-30 -20 -28)"/>
+        <g transform="translate(0 -48)">
+          <path d="M0 0 L-24 -13 L-24 13 Z" fill="#FF5FA2"/>
+          <path d="M0 0 L24 -13 L24 13 Z" fill="#FF5FA2"/>
+          <circle r="7" fill="#FF8FC0"/>
+        </g>
+        <g class="eyes-open">
+          <g class="blink">
+            <circle cx="-18" cy="-6" r="16" fill="#fff"/>
+            <circle cx="18" cy="-6" r="16" fill="#fff"/>
+            <g id="pupils">
+              <circle cx="-16" cy="-4" r="8.5" fill="#1E1A30"/>
+              <circle cx="20" cy="-4" r="8.5" fill="#1E1A30"/>
+              <circle cx="-13" cy="-8" r="3" fill="#fff"/>
+              <circle cx="23" cy="-8" r="3" fill="#fff"/>
+            </g>
+          </g>
+        </g>
+        <g class="eyes-happy" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round">
+          <path d="M-30 -4 Q-18 -18 -6 -4"/><path d="M6 -4 Q18 -18 30 -4"/>
+        </g>
+        <ellipse cx="-33" cy="14" rx="9" ry="6" fill="#FF8FB1"/>
+        <ellipse cx="33" cy="14" rx="9" ry="6" fill="#FF8FB1"/>
+        <path class="m-smile" d="M-11 18 Q0 28 11 18" fill="none" stroke="#FF8FB1" stroke-width="4.5" stroke-linecap="round"/>
+        <ellipse class="m-wow" cx="0" cy="23" rx="7" ry="9" fill="#FF6B8B"/>
+        <path class="m-grin" d="M-15 15 Q0 40 15 15 Z" fill="#FF6B8B"/>
+      </g>
+      <g transform="translate(0 -78)">
+        <g id="alarm">
+          <path d="M0 -92 L14 -70 L40 -78 L30 -54 L54 -42 L28 -32 L34 -6 L10 -18 L0 4 L-10 -18 L-34 -6 L-28 -32 L-54 -42 L-30 -54 L-40 -78 L-14 -70 Z"
+                fill="#FFE066" stroke="#FF9F43" stroke-width="4" stroke-linejoin="round"/>
+          <rect x="-6" y="-66" width="12" height="34" rx="6" fill="#FF3D3D"/>
+          <circle cy="-20" r="6.5" fill="#FF3D3D"/>
+          <path d="M62 -20 C70 -8 72 0 62 8 C52 0 54 -8 62 -20Z" fill="#7FD0FF"/>
+        </g>
+      </g>
+      <circle id="spiderHit" r="95" fill="transparent"/>
+    </g>
+
+    <g id="bubble">
+      <g id="bubbleIn">
+        <path d="M0 0 L18 -26 H-6 Z" fill="#fff"/>
+        <rect x="-10" y="-86" width="130" height="62" rx="26" fill="#fff"/>
+        <text x="55" y="-44" text-anchor="middle" font-size="34" font-weight="800" fill="#FF3D7F"
+              font-family="'Baloo 2',system-ui,sans-serif">Hihi!</text>
+      </g>
+    </g>
+
+    <g id="twinkles"></g>
+    <g id="rain"></g>
+    <g id="notes" font-size="54" font-weight="800"></g>
+    <g id="confetti"></g>
+  </svg>
+
+  <div class="cue" id="cue"><span class="cue-icon beat" id="cueIcon">💃</span><span class="cue-text" id="cueText"></span></div>
+  <div class="title" id="title"></div>
+  <div class="lyrics" id="lyrics">
+    <div id="rows"></div>
+    <div class="ball" id="ball"><svg viewBox="-60 -60 120 120"><use href="#mini" x="-60" y="-60" width="120" height="120"/></svg></div>
+  </div>
+
+  <div class="controls">
+    <button id="btnPrev" aria-label="Cảnh trước"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5v14L9.5 12z"/></svg></button>
+    <button id="btnPlay" class="main" aria-label="Phát / tạm dừng"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
+    <button id="btnNext" aria-label="Cảnh sau"><svg viewBox="0 0 24 24"><path d="M15.5 5H18v14h-2.5zM4 5v14l10.5-7z"/></svg></button>
+    <button id="btnFull" aria-label="Toàn màn hình"><svg viewBox="0 0 24 24"><path d="M4 4h6v2.5H6.5V10H4zm10 0h6v6h-2.5V6.5H14zM4 14h2.5v3.5H10V20H4zm13.5 0H20v6h-6v-2.5h3.5z"/></svg></button>
+    <button id="btnGuide" aria-label="Lời bài hát và động tác"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm1.2 14h-2.4v-6.5h2.4zm-1.2-8.2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></button>
+  </div>
+
+  <button class="overlay" id="overlay">
+    <span class="big-play"><svg viewBox="0 0 24 24" id="overlayIcon"><path d="M7 4.5v15l12.5-7.5z"/></svg></span>
+    <span class="overlay-label" id="overlayLabel">Bấm để hát cùng Chú Nhện!</span>
+  </button>
+</div>
+
+<dialog id="guide">
+  <button class="close" id="guideClose">Đóng</button>
+  <h2>🕷️ Chú Nhện Đen</h2>
+  <p style="margin:0;color:#7A7195">Giai điệu “Itsy Bitsy Spider”, nhịp 6/8 ~100 BPM, dài ~1 phút: dạo đầu → 1 lượt → đoạn nhảy → 1 lượt → kết.</p>
+  <h3>Lời &amp; động tác</h3>
+  <ol>
+    <li><b>Một chú nhện con màu đen thui</b><br>👋 Vẫy tay chào bạn nhện.</li>
+    <li><b>chú ta trèo lên mái nhà</b><br>🙌 Chụm ngón tay “bò” dần lên cao qua đầu.</li>
+    <li><b>Chợt một cơn mưa</b><br>🌧️ Ngón tay rơi lách tách từ trên xuống.</li>
+    <li><b>cuốn chú trôi về nơi rất xa</b><br>🌀 Xoay một vòng, tay đưa ra thật xa.</li>
+    <li><b>Trời tạnh mưa ngừng rơi</b><br>✋ Hai tay xua xua — mây ơi đi đi!</li>
+    <li><b>chiếu muôn ngàn tia nắng ngời</b><br>☀️ Hai tay vẽ vòng tròn thật to trên đầu.</li>
+    <li><b>Và chú nhện con màu đen thui,</b><br>👣 Dậm chân tại chỗ, đi về nhà.</li>
+    <li><b>chú ta lại lên mái nhà</b><br>💪 Leo lại lên cao, cuối câu giơ tay “Yeah!”.</li>
+    <li><b>Đoạn nhảy: Leo leo leo! Nhện ơi, cố lên! / Vỗ tay nào! Bốp bốp bốp!</b><br>👏 Nhún gối theo nhạc, vỗ tay ba cái.</li>
+    <li><b>Bé giỏi quá! Yeee!</b><br>🤗 Ôm bé một cái thật chặt.</li>
+  </ol>
+  <h3>Mẹo</h3>
+  <ul>
+    <li>Bé 2 tuổi chưa đọc chữ: hình và động tác là chính, chữ để người lớn hát dẫn. Bố mẹ làm trước, bé bắt chước theo.</li>
+    <li>Bé thích lặp lại — bấm “Hát lại” bao nhiêu lần cũng được.</li>
+    <li>Chạm vào chú nhện: nhện nhảy lộn vòng, cười “Hihi!”. Chạm chỗ khác: bắn sao kèm tiếng chuông.</li>
+    <li>Phím tắt: <b>Space</b> phát/dừng · <b>← →</b> chuyển cảnh · <b>F</b> toàn màn hình.</li>
+    <li>iPhone/iPad không có tiếng? Gạt tắt chế độ im lặng ở cạnh máy.</li>
+  </ul>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ================= BÀI HÁT =================
+     Đơn vị thời gian là nốt móc đơn (E giây). Nhịp 6/8: mỗi phách = 3 móc đơn.
+     Mỗi câu hát = 1 slide = 2 ô nhịp = 12 móc đơn (len ghi đè khi khác).
+     Âm tiết: [chữ, nốt, độ dài]; "/" ở đầu chữ = xuống dòng;
+     pick = số móc đơn hát lấy đà trước câu. */
+  const E = 0.2, BEAT = 3 * E, LINE = 12;
+  const NOTE = { G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880, C6:1046.5 };
+  const CHORD = {
+    C: { bass:[130.81, 98.00],  pad:[261.63, 329.63, 392.00] },
+    F: { bass:[87.31, 130.81],  pad:[261.63, 349.23, 440.00] },
+    G: { bass:[98.00, 146.83],  pad:[246.94, 293.66, 392.00] },
+  };
+
+  const SCENES = {
+    intro:  { icon:'💃', text:'Đứng dậy, lắc lư nào!' },
+    meet:   { icon:'👋', text:'Vẫy tay chào bạn nhện!' },
+    climb:  { icon:'🙌', text:'Ngón tay bò lên mái nhà!' },
+    rain:   { icon:'🌧️', text:'Ngón tay rơi lách tách!' },
+    wash:   { icon:'🌀', text:'Xoay một vòng… trôi xa!' },
+    clear:  { icon:'✋', text:'Hết mưa rồi — xua mây đi!' },
+    sun:    { icon:'☀️', text:'Giơ tay làm ông mặt trời!' },
+    back:   { icon:'👣', text:'Dậm chân đi về nhà!' },
+    climb2: { icon:'💪', text:'Leo lại nào — cố lên!' },
+    dance:  { icon:'👏', text:'Nhún nhảy, vỗ tay bốp bốp!' },
+    end:    { icon:'🤗', text:'Ôm một cái thật chặt!' },
+  };
+
+  const INTRO = { scene:'intro', len:24, chords:'C C G G C C G G',
+    syl:[['Một','tick',6],['hai','tick',6],['ba,','tick',6],['nhảy nào!','tick',5]] };
+  // Lời theo giai điệu "Itsy Bitsy Spider" — mỗi câu một slide
+  const VERSE = [
+    { scene:'meet', pick:-1, chords:'C C C C',
+      syl:[['Một','G4',1],['chú','C5',2],['nhện','C5',1],['con','C5',2],['màu','D5',1],['đen','E5',2],['thui','E5',3]] },
+    { scene:'climb', pick:-1, chords:'G G C C',
+      syl:[['chú','E5',1],['ta','D5',2],['trèo','C5',1],['lên','D5',2],['mái','E5',1],['nhà','C5',5]] },
+    { scene:'rain', chords:'C F C C',
+      syl:[['Chợt','E5',2],['một','E5',1],['cơn','F5',2],['mưa','G5',6]] },
+    { scene:'wash', pick:-1, chords:'F G C C',
+      syl:[['cuốn','G5',1],['chú','F5',2],['trôi','E5',1],['về','F5',2],['nơi','G5',1],['rất','G5',2],['xa','E5',4]] },
+    { scene:'clear', chords:'C C C C',
+      syl:[['Trời','C5',2],['tạnh','C5',1],['mưa','D5',2],['ngừng','E5',1],['rơi','E5',5]] },
+    { scene:'sun', pick:-1, chords:'G G C C',
+      syl:[['chiếu','E5',1],['muôn','D5',2],['ngàn','C5',1],['tia','D5',2],['nắng','E5',1],['ngời','C5',4]] },
+    { scene:'back', pick:-2, chords:'C C C C',
+      syl:[['Và','G4',1],['chú','G4',1],['nhện','C5',2],['con','C5',1],['màu','C5',2],['đen','D5',1],['thui,','E5',5]] },
+    { scene:'climb2', pick:-1, chords:'G G C C',
+      syl:[['chú','E5',1],['ta','D5',2],['lại','C5',1],['lên','D5',2],['mái','E5',1],['nhà!','C5',6]] },
+  ];
+  const DANCE = [
+    { scene:'dance', len:24, chords:'C F C C C G C C',
+      syl:[['Leo','G5',3],['leo','A5',3],['leo!','C6',6],['/Nhện','E5',3],['ơi,','D5',3],['cố','E5',3],['lên!','C5',3]] },
+    { scene:'dance', len:24, chords:'C F C C F G C C',
+      syl:[['Vỗ','G5',3],['tay','A5',3],['nào!','C6',6],['/Bốp','clap',3],['bốp','clap',3],['bốp!','clap',5]] },
+  ];
+  const OUTRO = { scene:'end', len:24, chords:'C C C C F F C C',
+    syl:[['Bé','C5',3],['giỏi','E5',3],['quá!','G5',6],['/Yeee!','C6',12]] };
+
+  const SONG = [INTRO, ...VERSE, ...DANCE, ...VERSE, OUTRO];
+
+  // Đổi đơn vị móc đơn sang giây; "show" = lúc câu bắt đầu hiện (kể cả nốt lấy đà)
+  let cursor = 0;
+  const lines = SONG.map(spec => {
+    const start = cursor, len = spec.len || LINE;
+    cursor += len;
+    let pos = start + (spec.pick || 0);
+    const syl = spec.syl.map(([raw, note, d]) => {
+      const s = { text: raw.replace(/^\//, ''), br: raw.startsWith('/'), note, t: pos * E, d: d * E };
+      pos += d;
+      return s;
+    });
+    return { ...spec, len, start: start * E, show: Math.min(start * E, syl[0].t), syl };
+  });
+  lines[0].show = 0;
+  const sceneStarts = lines.filter((L, k) => k === 0 || L.scene !== lines[k - 1].scene).map(L => L.show);
+
+  /* ================= ÂM THANH (Web Audio, không cần file nhạc) ================= */
+  const A = { ctx:null, out:null, bus:null, fx:null, noise:null };
+
+  function ensureAudio() {
+    if (!A.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      A.ctx = new AC();
+      const comp = A.ctx.createDynamicsCompressor();
+      A.out = A.ctx.createGain();
+      A.out.gain.value = .8;
+      A.out.connect(comp); comp.connect(A.ctx.destination);
+      A.fx = A.ctx.createGain(); A.fx.connect(A.out);       // tiếng chạm của bé, không bị tắt khi dừng nhạc
+      const n = A.ctx.sampleRate, buf = A.ctx.createBuffer(1, n, n), ch = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) ch[i] = Math.random() * 2 - 1;
+      A.noise = buf;
+    }
+    if (A.ctx.state !== 'running') A.ctx.resume();
+    return A.ctx;
+  }
+
+  function env(g, w, peak, att, dec) {
+    g.gain.setValueAtTime(.0001, w);
+    g.gain.exponentialRampToValueAtTime(peak, w + att);
+    g.gain.exponentialRampToValueAtTime(.0001, w + att + dec);
+  }
+  function osc(dest, w, freq, type, peak, dec, att = .008) {
+    const o = A.ctx.createOscillator(), g = A.ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, w);
+    env(g, w, peak, att, dec);
+    o.connect(g); g.connect(dest);
+    o.start(w); o.stop(w + att + dec + .05);
+    return o;
+  }
+  function noise(dest, w, type, freq, peak, dec, q = 1) {
+    const s = A.ctx.createBufferSource(), f = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
+    s.buffer = A.noise; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    env(g, w, peak, .003, dec);
+    s.connect(f); f.connect(g); g.connect(dest);
+    s.start(w); s.stop(w + dec + .05);
+  }
+  const bell = (d, w, f, dur) => {
+    const dec = Math.min(1.6, dur + .4);
+    osc(d, w, f, 'sine', .30, dec); osc(d, w, f, 'triangle', .10, dec * .8);
+    osc(d, w, f * 2, 'sine', .07, dec * .4); osc(d, w, f * 4, 'sine', .03, .15);
+  };
+  const bass   = (d, w, f) => { osc(d, w, f, 'triangle', .32, .42); osc(d, w, f * 2, 'sine', .06, .2); };
+  const pad    = (d, w, fs, dur) => fs.forEach(f => osc(d, w, f, 'triangle', .035, dur, .06));
+  const kick   = (d, w) => { osc(d, w, 150, 'sine', .7, .24, .004).frequency.exponentialRampToValueAtTime(45, w + .14); };
+  const clap   = (d, w, loud) => [0, .011, .022].forEach(o => noise(d, w + o, 'bandpass', 1500, loud ? .4 : .14, loud ? .14 : .08, .9));
+  const shaker = (d, w, acc) => noise(d, w, 'highpass', 7000, acc ? .05 : .025, .045);
+  const tick   = (d, w) => { osc(d, w, 1250, 'sine', .28, .06, .002); osc(d, w, 830, 'triangle', .12, .05, .002); };
+  const crash  = (d, w) => noise(d, w, 'highpass', 4500, .12, 1.6, .5);
+  const boing  = (d, w) => {
+    const o = osc(d, w, 240, 'sine', .35, .42, .01);
+    o.frequency.exponentialRampToValueAtTime(820, w + .16);
+    o.frequency.exponentialRampToValueAtTime(480, w + .38);
+  };
+
+  // Dựng sẵn toàn bộ sự kiện của bài; bộ lập lịch chỉ đẩy dần vào AudioContext
+  const events = [];
+  const at = (t, fn) => events.push({ t, fn });
+  lines.forEach(L => {
+    L.syl.forEach(s => {
+      if (s.note === 'clap') at(s.t, (d, w) => clap(d, w, true));
+      else if (s.note === 'tick') at(s.t, (d, w) => tick(d, w));
+      else at(s.t, (d, w) => bell(d, w, NOTE[s.note], s.d));
+    });
+    L.chords.split(' ').forEach((c, b) => {
+      const t = L.start + b * BEAT, C = CHORD[c];
+      at(t, (d, w) => bass(d, w, C.bass[b % 2]));
+      if (b % 2 === 0) { at(t, (d, w) => kick(d, w)); at(t, (d, w) => pad(d, w, C.pad, BEAT * 2)); }
+      else at(t, (d, w) => clap(d, w, false));
+    });
+    for (let e = 0; e < L.len; e++) at(L.start + e * E, (d, w) => shaker(d, w, e % 3 === 0));
+  });
+  const TAIL = cursor * E;
+  at(TAIL, (d, w) => {
+    kick(d, w); crash(d, w); pad(d, w, CHORD.C.pad, 2.2);
+    [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6].forEach(f => bell(d, w, f, 1.6));
+  });
+  events.sort((a, b) => a.t - b.t);
+  const SONG_END = TAIL + 2.2;
+
+  /* ================= TRẠNG THÁI PHÁT ================= */
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), world = $('world');
+  let state = 'idle', startAt = 0, pausedAt = 0, nextEv = 0;
+
+  const songTime = () => state === 'playing' ? Math.max(0, A.ctx.currentTime - startAt) : pausedAt;
+
+  function pump() {
+    if (state !== 'playing') return;
+    const now = A.ctx.currentTime - startAt;
+    while (nextEv < events.length && events[nextEv].t < now + .3) {
+      const ev = events[nextEv++];
+      if (ev.t >= now - .05) ev.fn(A.bus, startAt + ev.t);   // bỏ nốt đã trễ (tab bị ngủ)
+    }
+  }
+  setInterval(pump, 50);
+
+  function fadeOut(bus) {
+    if (!bus) return;
+    bus.gain.setTargetAtTime(0, A.ctx.currentTime, .03);
+    setTimeout(() => bus.disconnect(), 300);
+  }
+
+  function play(from) {
+    const c = ensureAudio();
+    if (!c) return;
+    fadeOut(A.bus);
+    A.bus = c.createGain(); A.bus.connect(A.out);
+    startAt = c.currentTime + .08 - from;
+    nextEv = events.findIndex(e => e.t >= from - .001);
+    if (nextEv < 0) nextEv = events.length;
+    state = 'playing';
+    resyncBeat(from);
+    syncUi();
+    pump();
+  }
+  function pause() {
+    pausedAt = songTime();
+    state = 'paused';
+    fadeOut(A.bus); A.bus = null;
+    syncUi();
+  }
+  function finish() {
+    pausedAt = SONG_END;
+    state = 'ended';
+    syncUi();
+  }
+  function toggle() {
+    if (state === 'playing') pause();
+    else play(state === 'paused' ? pausedAt : 0);
+  }
+  function jump(dir) {
+    const t = state === 'idle' ? 0 : songTime();
+    let target;
+    if (dir > 0) target = sceneStarts.find(s => s > t + .05);
+    else {
+      const past = sceneStarts.filter(s => s <= t - 1.2);
+      target = past.length ? past[past.length - 1] : 0;
+    }
+    if (target !== undefined) play(target);
+  }
+
+  // Khởi động lại animation theo phách (hoa, mặt trời, nhà...) để khớp nhịp nhạc
+  function resyncBeat(from) {
+    stage.style.setProperty('--sync', `${-(from % (BEAT * 2)).toFixed(3)}s`);
+    stage.classList.add('resync');
+    void stage.offsetWidth;
+    stage.classList.remove('resync');
+  }
+
+  const PLAY_PATH = 'M7 4.5v15l12.5-7.5z';
+  const PAUSE_PATH = 'M6 4.5h4.5v15H6zm7.5 0H18v15h-4.5z';
+  const REPLAY_PATH = 'M12 5V1.5L7 6.5l5 5V8a5 5 0 1 1-5 5H4.5A7.5 7.5 0 1 0 12 5z';
+  function syncUi() {
+    const playing = state === 'playing';
+    $('playIcon').innerHTML = `<path d="${playing ? PAUSE_PATH : PLAY_PATH}"/>`;
+    stage.classList.toggle('paused', state === 'paused');
+    $('overlay').hidden = playing;
+    $('overlayIcon').innerHTML = `<path d="${state === 'ended' ? REPLAY_PATH : PLAY_PATH}"/>`;
+    $('overlayLabel').textContent =
+      state === 'ended' ? 'Hát lại nào!' : state === 'paused' ? 'Hát tiếp nào!' : 'Bấm để hát cùng Chú Nhện!';
+  }
+
+  /* ================= CẢNH + LỜI KARAOKE ================= */
+  const rowsEl = $('rows'), ball = $('ball'), title = $('title'), cue = $('cue');
+  let curLine = -1, curScene = '';
+
+  function lineIndexAt(t) {
+    let i = 0;
+    for (let k = 0; k < lines.length; k++) if (t >= lines[k].show) i = k;
+    return i;
+  }
+
+  function showLine(li) {
+    curLine = li;
+    const L = lines[li];
+    if (L.scene !== curScene) {
+      curScene = L.scene;
+      world.dataset.scene = L.scene;
+      $('cueIcon').textContent = SCENES[L.scene].icon;
+      $('cueText').textContent = SCENES[L.scene].text;
+      cue.classList.remove('pop'); void cue.offsetWidth; cue.classList.add('pop');
+      title.innerHTML = L.scene === 'end'
+        ? '<span>Bé</span> <span style="color:#FFE066">giỏi</span> <span style="color:#7FE3FF">quá!</span>'
+        : '<span style="color:#FF7AB6">Chú</span> <span style="color:#FFE066">Nhện</span> <span style="color:#7FE3FF">Đen</span>';
+      title.classList.toggle('show', L.scene === 'intro' || L.scene === 'end');
+    }
+    rowsEl.innerHTML = '';
+    let row = document.createElement('div');
+    row.className = 'row';
+    rowsEl.appendChild(row);
+    L.els = L.syl.map(s => {
+      if (s.br) {
+        row = document.createElement('div');
+        row.className = 'row';
+        rowsEl.appendChild(row);
+      }
+      const span = document.createElement('span');
+      span.className = 'syl';
+      span.textContent = s.text;
+      row.appendChild(span);
+      return span;
+    });
+  }
+
+  function drawLyrics(L, t, clock) {
+    let idx = -1;
+    L.syl.forEach((s, i) => { if (t >= s.t) idx = i; });
+    L.els.forEach((el, i) => {
+      el.classList.toggle('done', i < idx);
+      el.classList.toggle('on', i === idx);
+    });
+    // quả bóng nhện nhảy từ chữ đang hát sang chữ kế tiếp, chạm đúng lúc chữ đó bắt đầu
+    const c = i => ({ x: L.els[i].offsetLeft + L.els[i].offsetWidth / 2, y: L.els[i].offsetTop });
+    const h = stage.clientWidth * .028;
+    let x, y;
+    if (idx < 0) {
+      const p = c(0);
+      x = p.x; y = p.y - Math.abs(Math.sin(Math.PI * clock / BEAT)) * h * .5;
+    } else {
+      const s = L.syl[idx], q = Math.min(1, (t - s.t) / s.d);
+      const a = c(idx), b = idx + 1 < L.els.length ? c(idx + 1) : a;
+      x = a.x + (b.x - a.x) * q;
+      y = a.y + (b.y - a.y) * q - Math.sin(Math.PI * q) * h;
+    }
+    ball.style.transform = `translate(${x}px, ${y}px)`;
+  }
+
+  /* ================= CHÚ NHỆN ================= */
+  const spider = $('spider'), squash = $('spiderSquash'), legsL = $('legsL'), legsR = $('legsR');
+  const pupils = $('pupils'), bubble = $('bubble'), bubbleIn = $('bubbleIn');
+  const disp = { x:470, y:470, s:1 };
+  let poke = 0, pokeMood = 0;
+
+  const clamp01 = x => Math.max(0, Math.min(1, x));
+  const easeIO = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+
+  // lb = số phách kể từ đầu câu (theo nhạc); bp = số phách tổng (dùng cho nhún nhảy)
+  function pose(scene, lb, bp, clock) {
+    const ph = bp - Math.floor(bp);
+    const hop = Math.sin(Math.PI * ph);
+    const sway = Math.sin(Math.PI * bp);
+    const P = { x:470, y:470, r:0, s:1, sq:0, leg:sway * 12, lx:0, ly:0, mood:'smile' };
+
+    if (scene === 'intro') {
+      P.y -= hop * 30; P.r = sway * 10; P.s = 1.05; P.sq = 1; P.mood = 'grin';
+    } else if (scene === 'meet') {                      // "Một chú nhện con màu đen thui": chào bé
+      P.y -= hop * 22; P.s = 1.2; P.r = sway * 6; P.leg = sway * 28; P.sq = 1; P.mood = 'grin';
+    } else if (scene === 'climb' || scene === 'climb2') {
+      // leo từng bước theo phách, tới mái nhà ở phách thứ 4
+      const k = clamp01((Math.floor(lb) + easeIO(lb - Math.floor(lb))) / 3);
+      P.x = 639; P.y = 470 - 165 * k; P.s = .85; P.ly = -5;
+      P.leg = Math.sin(Math.PI * lb * 2) * 22;
+      if (scene === 'climb2' && lb >= 3) { P.y -= hop * 45; P.r = sway * 14; P.mood = 'grin'; P.ly = 0; }
+    } else if (scene === 'rain') {                      // "Chợt một cơn mưa": giật mình nảy lên rồi run cầm cập
+      P.mood = 'wow';
+      const jolt = lb < .8 ? Math.sin(Math.PI * lb / .8) * 70 : 0;
+      P.x = 639 + Math.sin(clock * 45) * 3; P.y = 305 - jolt; P.s = .85; P.ly = -8;
+      P.leg = Math.sin(clock * 30) * 10;
+    } else if (scene === 'wash') {                      // "cuốn chú trôi về nơi rất xa": lộn vòng ra xa
+      const e = clamp01(lb / 3.4), ee = 1 - Math.pow(1 - e, 3);
+      P.x = 639 - 410 * ee; P.y = 305 + 165 * ee - Math.sin(Math.PI * e) * 90;
+      P.s = .85 - .1 * ee; P.r = 720 * ee; P.leg = Math.sin(clock * 25) * 25; P.mood = 'wow';
+      if (e >= 1) { P.r = Math.sin(clock * 5) * 10; P.lx = Math.sin(clock * 6) * 5; }
+    } else if (scene === 'clear') {                     // "Trời tạnh mưa ngừng rơi": còn chóng mặt
+      P.x = 229; P.s = .75; P.r = Math.sin(clock * 4) * 12;
+      P.lx = Math.sin(clock * 6) * 5; P.ly = Math.cos(clock * 6) * 5; P.leg = sway * 8;
+    } else if (scene === 'sun') {                       // "chiếu muôn ngàn tia nắng ngời": phơi nắng
+      P.x = 229; P.s = .8; P.r = sway * 8; P.y -= hop * 12; P.leg = sway * 16; P.mood = 'happy';
+    } else if (scene === 'back') {                      // "Và chú nhện con màu đen thui": nhún nhảy về nhà
+      const k = clamp01((Math.floor(lb) + easeIO(lb - Math.floor(lb))) / 3);
+      P.x = 229 + 360 * k; P.y -= hop * 30; P.s = .8 + .2 * k; P.r = sway * 10;
+      P.leg = sway * 26; P.sq = 1; P.mood = 'grin';
+    } else if (scene === 'dance') {
+      P.x = 470 + Math.sin(Math.PI * bp / 2) * 80; P.y = 470 - hop * 50;
+      P.r = sway * 16; P.s = 1.2; P.leg = sway * 30; P.sq = 1; P.mood = 'grin';
+    } else if (scene === 'end') {
+      P.y = 455 - hop * 28; P.s = 1.35; P.r = sway * 8; P.leg = sway * 32; P.sq = 1; P.mood = 'happy';
+    }
+    if (P.sq) {
+      const land = Math.pow(1 - hop, 4);
+      P.sx = 1 + .12 * land - .04 * hop; P.sy = 1 - .12 * land + .07 * hop;
+    } else { P.sx = 1; P.sy = 1; }
+    return P;
+  }
+
+  function drawSpider(L, t, clock, dt) {
+    const lb = Math.max(0, (t - L.start) / BEAT);
+    const P = pose(L.scene, lb, clock / BEAT, clock);
+    const k = 1 - Math.exp(-dt * 14);                   // làm mượt khi chuyển cảnh
+    disp.x += (P.x - disp.x) * k; disp.y += (P.y - disp.y) * k; disp.s += (P.s - disp.s) * k;
+
+    let y = disp.y, r = P.r;
+    if (poke > 0) {                                     // bé chạm vào: nhảy lộn một vòng
+      y -= Math.sin(Math.PI * (1 - poke)) * 90;
+      r += 360 * (1 - poke);
+      poke = Math.max(0, poke - dt * 2.2);
+    }
+    spider.setAttribute('transform', `translate(${disp.x.toFixed(1)} ${y.toFixed(1)}) rotate(${r.toFixed(1)}) scale(${disp.s.toFixed(3)})`);
+    squash.setAttribute('transform', `translate(0 50) scale(${P.sx.toFixed(3)} ${P.sy.toFixed(3)}) translate(0 -50)`);
+    legsL.setAttribute('transform', `rotate(${P.leg.toFixed(1)} -35 5)`);
+    legsR.setAttribute('transform', `rotate(${(-P.leg).toFixed(1)} 35 5)`);
+    pupils.setAttribute('transform', `translate(${P.lx.toFixed(1)} ${P.ly.toFixed(1)})`);
+    bubble.setAttribute('transform', `translate(${(disp.x + 60 * disp.s).toFixed(1)} ${(y - 95 * disp.s).toFixed(1)})`);
+
+    if (pokeMood > 0) pokeMood -= dt;
+    spider.dataset.mood = pokeMood > 0 ? 'happy' : P.mood;
+    bubbleIn.classList.toggle('show', pokeMood > 0);
+  }
+
+  /* ================= TRANG TRÍ SINH BẰNG JS ================= */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs, parent) => {
+    const el = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    parent.appendChild(el);
+    return el;
+  };
+  for (let i = 0; i < 30; i++) {
+    const d = mk('use', { href:'#drop', x: 560 + (i * 37) % 560, y: 150 + (i * 53) % 70, width: 20, height: 30, class:'drop' }, $('rain'));
+    d.style.animationDelay = `${-((i * .137) % .9).toFixed(2)}s`;
+    d.style.animationDuration = `${(.8 + (i % 4) * .1).toFixed(2)}s`;
+  }
+  for (let i = 0; i < 16; i++) {                       // chùm tia nắng dài quanh mặt trời
+    const a = i * Math.PI / 8, w = .07;
+    const p = (r, d) => `${(Math.cos(a + d) * r).toFixed(1)},${(Math.sin(a + d) * r).toFixed(1)}`;
+    mk('polygon', { points: `${p(70, -w)} ${p(420, -w * 1.6)} ${p(420, w * 1.6)} ${p(70, w)}` }, $('glowRays'));
+  }
+  for (let i = 0; i < 26; i++) {                       // sao lấp lánh rải khắp bầu trời
+    const s = 14 + (i % 4) * 7;
+    // vị trí đặt ở nhóm cha vì transform CSS của .tw ghi đè thuộc tính transform
+    const at = mk('g', { transform: `translate(${60 + (i * 211) % 1180} ${40 + (i * 137) % 440})` }, $('twinkles'));
+    const tw = mk('path', {
+      d: `M0 ${-s} Q${s * .18} ${-s * .18} ${s} 0 Q${s * .18} ${s * .18} 0 ${s} Q${-s * .18} ${s * .18} ${-s} 0 Q${-s * .18} ${-s * .18} 0 ${-s}Z`,
+      fill: i % 3 ? '#FFFFFF' : '#FFE066', class: 'tw',
+    }, at);
+    tw.style.animationDelay = `${-((i * .29) % 1.6).toFixed(2)}s`;
+  }
+  const COLORS = ['#FF5A5A', '#FF9F43', '#FFD23F', '#5BD66B', '#4FB3FF', '#B98CFF', '#FF7AB6'];
+  for (let i = 0; i < 40; i++) {
+    const c = mk('rect', { x: (i * 97) % 1280, y: -30, width: 12, height: 20, rx: 3, fill: COLORS[i % COLORS.length], class:'cf' }, $('confetti'));
+    c.style.animationDelay = `${-((i * .37) % 4).toFixed(2)}s`;
+    c.style.animationDuration = `${3 + (i % 5) * .5}s`;
+  }
+  ['♪', '♫', '♪', '♬', '♫', '♪', '♬', '♪'].forEach((n, i) => {
+    const el = mk('text', { x: 90 + i * 150, y: 600, fill: COLORS[(i * 3) % COLORS.length], class:'note-f' }, $('notes'));
+    el.textContent = n;
+    el.style.animationDelay = `${-(i * .4).toFixed(1)}s`;
+  });
+
+  /* ================= TƯƠNG TÁC ================= */
+  const PENTA = [1046.5, 1174.66, 1318.51, 1567.98, 1760];
+  const SPARKS = ['⭐', '💖', '🌟', '✨', '🎵', '🌈'];
+
+  stage.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    const c = ensureAudio();
+    if (c) bell(A.fx, c.currentTime + .01, PENTA[Math.floor(Math.random() * PENTA.length)], .3);
+    const r = stage.getBoundingClientRect();
+    const sp = document.createElement('span');
+    sp.className = 'sparkle';
+    sp.textContent = SPARKS[Math.floor(Math.random() * SPARKS.length)];
+    sp.style.left = `${e.clientX - r.left}px`;
+    sp.style.top = `${e.clientY - r.top}px`;
+    sp.addEventListener('animationend', () => sp.remove());
+    stage.appendChild(sp);
+  });
+  $('spiderHit').addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    const c = ensureAudio();
+    if (c) boing(A.fx, c.currentTime + .01);
+    poke = 1; pokeMood = .9;
+  });
+
+  $('overlay').addEventListener('click', toggle);
+  $('btnPlay').addEventListener('click', toggle);
+  $('btnPrev').addEventListener('click', () => jump(-1));
+  $('btnNext').addEventListener('click', () => jump(1));
+  $('btnFull').addEventListener('click', toggleFull);
+  $('btnGuide').addEventListener('click', () => $('guide').showModal());
+  $('guideClose').addEventListener('click', () => $('guide').close());
+
+  function toggleFull() {
+    const d = document, el = d.documentElement;
+    if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    else (el.requestFullscreen || el.webkitRequestFullscreen || (() => {})).call(el);
+  }
+
+  document.addEventListener('keydown', e => {
+    if ($('guide').open) return;
+    if (e.code === 'Space') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') jump(1);
+    else if (e.key === 'ArrowLeft') jump(-1);
+    else if (e.key === 'f' || e.key === 'F') toggleFull();
+  });
+
+  /* ================= VÒNG LẶP KHUNG HÌNH ================= */
+  let lastTs = 0;
+  function frame(ts) {
+    const dt = Math.min(.1, (ts - lastTs) / 1000 || 0);
+    lastTs = ts;
+    pump();
+    if (state === 'playing' && songTime() >= SONG_END) finish();
+    const t = songTime();
+    const li = state === 'idle' ? 0 : lineIndexAt(t);
+    if (li !== curLine) showLine(li);
+    const L = lines[li];
+    const clock = state === 'playing' ? t : ts / 1000;   // khi dừng, nhện vẫn nhún tại chỗ
+    drawLyrics(L, state === 'idle' ? -1 : t, clock);
+    drawSpider(L, t, clock, dt);
+    requestAnimationFrame(frame);
+  }
+  syncUi();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
