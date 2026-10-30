@@ -196,7 +196,7 @@
   .ball svg{width:100%;height:100%;display:block}
 
   .controls{position:absolute;right:2cqw;top:2cqw;z-index:6;display:flex;gap:.8cqw}
-  .controls button{
+  .controls button,.controls a{
     width:5cqw; height:5cqw; border:0; border-radius:50%; padding:0; cursor:pointer;
     display:grid; place-items:center; background:#fff; color:var(--ink);
     box-shadow:0 .4cqw 0 rgba(43,37,64,.22); transition:transform .15s;
@@ -442,6 +442,7 @@
   </div>
 
   <div class="controls">
+    <a href="../index.html" aria-label="Về trang chủ"><svg viewBox="0 0 24 24"><path d="M12 3.5 2.5 11.5h2.8V20h5v-5.5h3.4V20h5v-8.5h2.8z"/></svg></a>
     <button id="btnPrev" aria-label="Cảnh trước"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5v14L9.5 12z"/></svg></button>
     <button id="btnPlay" class="main" aria-label="Phát / tạm dừng"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
     <button id="btnNext" aria-label="Cảnh sau"><svg viewBox="0 0 24 24"><path d="M15.5 5H18v14h-2.5zM4 5v14l10.5-7z"/></svg></button>
@@ -920,7 +921,7 @@
   const SPARKS = ['⭐', '💖', '🌟', '✨', '🎵', '🌈'];
 
   stage.addEventListener('pointerdown', e => {
-    if (e.target.closest('button')) return;
+    if (e.target.closest('button, a')) return;
     const c = ensureAudio();
     if (c) bell(A.fx, c.currentTime + .01, PENTA[Math.floor(Math.random() * PENTA.length)], .3);
     const r = stage.getBoundingClientRect();
