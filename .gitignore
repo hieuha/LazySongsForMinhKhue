@@ -99,5 +99,3 @@ external/
 # Git worktrees (local development only)
 worktrees/
 
-# ClaudeKit examples are not part of this repo
-/.claude/**/.env.example
