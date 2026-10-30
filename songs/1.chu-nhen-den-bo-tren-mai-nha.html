@@ -39,15 +39,17 @@
   @media (orientation: landscape){
     html.port .stage{inset:0 auto;left:50%;width:56.25vh;transform:translateX(-50%)}
   }
-  html.port .controls{top:calc(3*var(--u) + env(safe-area-inset-top));right:3cqw;gap:2cqw}
+  /* dọc: nút xuống đáy (ngón cái dễ bấm, không che hình), thẻ động tác lên sát mép trên */
+  html.port .controls{top:auto;left:3cqw;right:3cqw;bottom:calc(3cqw + env(safe-area-inset-bottom));
+                      justify-content:space-between;gap:0}
   html.port .controls button,html.port .controls a{width:11cqw;height:11cqw}
   html.port .controls svg{width:5.2cqw;height:5.2cqw}
-  html.port .cue{left:3cqw;right:3cqw;top:calc(17cqw + env(safe-area-inset-top));max-width:none;
+  html.port .cue{left:3cqw;right:3cqw;top:calc(3cqw + env(safe-area-inset-top));max-width:none;
                  gap:3cqw;padding:2cqw 4cqw 2cqw 3cqw;border-radius:6cqw}
   html.port .cue-icon{font-size:10cqw}
   html.port .cue-text{font-size:5.4cqw}
-  html.port .title{left:4cqw;right:4cqw;top:46cqw;font-size:15cqw;-webkit-text-stroke-width:1.2cqw;text-align:center}
-  html.port .lyrics{left:3cqw;right:3cqw;bottom:calc(4cqw + env(safe-area-inset-bottom));
+  html.port .title{left:4cqw;right:4cqw;top:32cqw;font-size:15cqw;-webkit-text-stroke-width:1.2cqw;text-align:center}
+  html.port .lyrics{left:3cqw;right:3cqw;bottom:calc(18cqw + env(safe-area-inset-bottom));
                     padding:7cqw 4cqw 3cqw;border-radius:6cqw;font-size:7cqw}
   html.port .row{white-space:normal}
   html.port .ball{width:7cqw;height:7cqw;margin:-6.8cqw 0 0 -3.5cqw}
@@ -757,22 +759,28 @@
     if (document.fullscreenElement || document.webkitFullscreenElement) lockOrientation();
   }
 
-  // Camera: viewBox luôn khớp đúng tỷ lệ sân khấu nên không có viền trống.
-  // Ngang: giữ nguyên chiều cao 720 và mở rộng sang hai bên (hoặc mở thêm trời phía trên nếu màn hình vuông hơn 16:9).
+  // Camera: viewBox luôn khớp đúng tỷ lệ sân khấu nên không có viền trống, và mặt đất
+  // (GROUND_Y, gồm cả chân nhân vật) luôn nằm ngay trên mép thanh lời — lời 1 dòng hay 2 dòng
+  // đều không che nhân vật, không cần chỉnh tay từng bài.
+  // Ngang: thấy trọn trời (y=0) tới mặt đất; thừa bề ngang thì mở rộng hai bên,
+  //        thiếu (màn vuông hơn 16:9) thì giữ rộng 1280 và mở thêm trời phía trên.
   // Dọc: khung hẹp 520 đơn vị, trượt theo nhân vật.
-  const cam = { x: 640 };
+  const GROUND_Y = 590;                                // dưới chân nhân vật lớn nhất (thân 470 + chân ~115)
+  const cam = { x: 640, ground: .8 };
   function updateCamera(dt) {
     const a = stage.clientWidth / Math.max(1, stage.clientHeight);
+    const g = Math.max(.55, Math.min(.92, lyricsEl.offsetTop / stage.clientHeight));
+    cam.ground += (g - cam.ground) * (1 - Math.exp(-dt * 4));
     let W, H, x0, y0;
     if (mode === 'port') {
       W = 520; H = W / a;
       cam.x += (disp.x - cam.x) * (1 - Math.exp(-dt * 3));
       x0 = Math.max(0, Math.min(1280 - W, cam.x - W / 2));
-      y0 = 560 - .84 * H;                               // mặt đất sát trên thanh lời
-    } else if (a >= 16 / 9) {
-      H = 720; W = H * a; x0 = 640 - W / 2; y0 = 0;
+      y0 = GROUND_Y - cam.ground * H;
     } else {
-      W = 1280; H = W / a; x0 = 0; y0 = 560 - .78 * H;
+      H = GROUND_Y / cam.ground; W = H * a;
+      if (W >= 1280) { x0 = 640 - W / 2; y0 = 0; }
+      else { W = 1280; H = W / a; x0 = 0; y0 = GROUND_Y - cam.ground * H; }
     }
     world.setAttribute('viewBox', `${x0.toFixed(1)} ${y0.toFixed(1)} ${W.toFixed(1)} ${H.toFixed(1)}`);
   }
@@ -815,7 +823,7 @@
   }
 
   /* ================= CẢNH + LỜI KARAOKE ================= */
-  const rowsEl = $('rows'), ball = $('ball'), title = $('title'), cue = $('cue');
+  const lyricsEl = $('lyrics'), rowsEl = $('rows'), ball = $('ball'), title = $('title'), cue = $('cue');
   let curLine = -1, curScene = '';
 
   function lineIndexAt(t) {
