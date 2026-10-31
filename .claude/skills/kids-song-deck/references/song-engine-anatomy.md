@@ -53,6 +53,7 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 - `len`: mặc định `LINE` (12 = 2 ô nhịp 6/8). Đoạn mở đầu/nhảy/kết thường `len:24`.
 - `chords`: mỗi phách một hợp âm (số hợp âm = `len / (BEAT/E)`). Phách chẵn có kick + pad, phách lẻ có clap nhẹ; shaker mỗi móc đơn, nhấn ở đầu phách (`STEP = BEAT/E`).
 - `soft: true`: câu nhẹ (ru ngủ) — chỉ bass + pad, không trống; nếu câu cuối là `soft` thì hợp âm kết cũng dịu (không kick/crash).
+- `rush: true`: tiếng lắc (shaker) dồn gấp đôi trong câu đó — dùng cho câu "nhanh". `len` mỗi câu có thể khác nhau (vd 12 hay 24); số hợp âm trong `chords` = `len / (BEAT/E)`.
 - Trường tuỳ ý cho riêng bài (vd `v` = số khỉ đã ngã) được giữ nguyên trong `lines[]`, dùng trong hàm tư thế.
 - Kiểm tra: `pick + tổng độ dài ≤ len` và không chồng lên `pick` của câu kế.
 - Với 4/4: `BEAT = 2 * E`, `LINE = 16` (2 ô nhịp). Engine tự tính shaker/hợp âm theo `BEAT/E`, không cần sửa vòng dựng sự kiện.
@@ -62,7 +63,7 @@ Tìm các mục bằng chú thích tiêu đề trong file. **GIỮ** = engine d�
 - Vẽ **một khuôn** nhân vật trong `<defs>` (`<g id="mkProto" class="mk">`, gốc ở tâm thân, bàn chân ở y = +53), JS `cloneNode` cho từng nhân vật rồi đổi màu phụ kiện (khăn), gắn thêm phụ kiện (nơ, điện thoại, áo bác sĩ) từ các nhóm mẫu trong `<defs>`.
 - Nét mặt theo `data-mood` trên từng bản sao; trạng thái phụ (`bumped`, `healed`) bằng class.
 - Một hàm tư thế `pose(i, L, lb, bp, clock)` trả `{x, feet, s, lift, r, arm, mood, …}`; vòng vẽ làm mượt x/feet/s, đặt bóng đổ, ghép transform. Các nhân vật nhảy lệch nhau 1/4 phách cho vui mắt.
-- Camera dọc: đặt `disp.x` cố định vào giữa nhóm (engine đọc `disp.x`).
+- Camera dọc: đặt `disp.x` cố định vào giữa nhóm (engine đọc `disp.x`). Nhân vật chính di chuyển → vẽ ở `disp.bx`, còn `disp.x` là điểm camera nhắm (xem bài 4).
 - Mỗi bản sao có vùng chạm riêng (`.mk-hit`) → nhân vật đó nhảy lộn + "Hihi!". Bong bóng chữ dùng chung (`#bubble`) — đổi `#bubbleText` theo nhân vật được chạm (vd sao "Hihi!", Cú "Hu hu!").
 
 ## Ảnh bìa

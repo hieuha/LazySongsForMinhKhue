@@ -36,4 +36,15 @@ window.SONGS = [
     tags: ['tiếng Anh', 'đi ngủ', 'thiên nhiên'],
     desc: 'Ngôi sao nhỏ lấp lánh, bạn Cú tò mò ngắm sao rồi cả hai chúc nhau ngủ ngon.',
   },
+  {
+    no: 4,
+    title: 'Cao Thấp To Bé',
+    file: 'songs/4.cao-thap-to-be-nhanh-cham.html',
+    cover: 'songs/covers/4.cao-thap-to-be.svg',
+    emoji: '🐰',
+    color: '#8ED8FF',
+    duration: '1 phút 25',
+    tags: ['con vật', 'vận động', 'trái nghĩa'],
+    desc: 'Thỏ con làm mẫu cao thấp, to bé tí xíu, chạy nhanh rồi đi chậm cùng bạn Rùa.',
+  },
 ];

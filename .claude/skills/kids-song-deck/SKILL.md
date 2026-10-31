@@ -16,6 +16,7 @@ Biến một bài hát thiếu nhi thành trang `songs/<số>.<ten-bai>.html` đ
 | `songs/1.chu-nhen-den-bo-tren-mai-nha.html` | **Khuôn mẫu chuẩn.** Luôn sao chép file này; không viết engine từ đầu |
 | `songs/2.nam-chu-khi-con-nhay-tren-giuong.html` | Ví dụ bài 4/4, **nhiều nhân vật** nhân bản từ một khuôn, cảnh trong nhà, kết ru ngủ (`soft`) |
 | `songs/3.twinkle-twinkle-little-star.html` | Ví dụ **lời tiếng Anh** (âm tiết nối `Twin-`), 2 nhân vật (sao bay + Cú), đoạn ngân "mm", lượt 2 `soft` |
+| `songs/4.cao-thap-to-be-nhanh-cham.html` | Ví dụ bài **khái niệm/trái nghĩa**: nhân vật co giãn từng bộ phận (thân kéo dài, đầu không méo), câu dài/ngắn khác nhau (`len` 12/24, `rush`), đạo cụ theo cảnh (`.prop`), camera nhắm giữa hai nhân vật |
 | `songs/covers/*.svg` | Ví dụ ảnh bìa vẽ từ nhân vật trong bài |
 | `scripts/screenshot-song-scenes.mjs` | Bước kiểm tra: chụp ảnh từng cảnh (máy tính + điện thoại) |
 
@@ -106,6 +107,11 @@ Yêu cầu bảng phải đạt:
 - Kiểm tra sau khi push: `gh api repos/hieuha/LazySongsForMinhKhue/pages --jq .status` ra `built`; nếu máy không phân giải được tên miền thì kiểm tra qua IP Cloudflare: `curl --resolve songs.hatrunghieu.com:443:$(dig +short @1.1.1.1 songs.hatrunghieu.com A | head -1) https://songs.hatrunghieu.com/songs/<file>.html -o /dev/null -w '%{http_code}'`. Người dùng báo `ERR_NAME_NOT_RESOLVED` mà DNS công cộng đã đúng → do bộ nhớ đệm: Chrome `chrome://net-internals/#dns` → Clear host cache; macOS `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`.
 
 ## Bẫy đã gặp
+
+- Bài dạy khái niệm (cao/thấp, to/bé, nhanh/chậm…): để **âm nhạc cũng diễn tả từ** — cao = nốt đi lên, thấp = đi xuống, to = nốt trầm, bé = nốt cao lí nhí, nhanh = câu ngắn nốt móc đơn + `rush:true`, chậm = câu dài (`len:24`) nốt ngân. Nhân vật đổi hình **theo từng tiếng hát** (mỗi "cao" vươn thêm một nấc), không đổi một lần cho cả câu.
+- Kéo cao/thụp thấp: chỉ co giãn **thân** (`scale` quanh chân) rồi dời nhóm đầu+tay theo `(1 - sy) * chiều cao thân` — co giãn cả con thì mặt bị méo.
+- Khung dọc chỉ rộng 520: nhân vật chạy qua lại hoặc có bạn đi kèm thì tách `disp.x` (tâm camera) khỏi vị trí vẽ nhân vật (`disp.bx`); cảnh chạy để camera đứng yên và biên độ ≤ ±190, cảnh hai nhân vật đặt camera vào giữa hai bạn.
+- Ảnh bìa: nút ▶ của thẻ nằm góc dưới phải — không đặt nhân vật phụ ở đó.
 
 - Phần tử SVG có animation/transition CSS `transform` **ghi đè thuộc tính `transform`** → đặt vị trí ở `<g>` cha, animation ở con.
 - Không animate xoay trực tiếp `<use x y>` với `transform-box: fill-box` (tâm xoay lệch, vật bay lệch chỗ) → bọc `<use>` trong `<g class="...">`.

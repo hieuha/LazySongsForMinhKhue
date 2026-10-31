@@ -734,7 +734,8 @@
       else at(t, (d, w) => clap(d, w, false));
     });
     const STEP = Math.round(BEAT / E);                   // móc đơn mỗi phách: 6/8 → 3, 4/4 → 2
-    if (!L.soft) for (let e = 0; e < L.len; e++) at(L.start + e * E, (d, w) => shaker(d, w, e % STEP === 0));
+    const SUB = L.rush ? 2 : 1;                          // rush = câu "nhanh": tiếng lắc dồn gấp đôi
+    if (!L.soft) for (let e = 0; e < L.len * SUB; e++) at(L.start + e * E / SUB, (d, w) => shaker(d, w, e % (STEP * SUB) === 0));
   });
   const TAIL = cursor * E;
   const SOFT_END = lines[lines.length - 1].soft;         // bài kết bằng câu nhẹ thì hợp âm cuối cũng dịu

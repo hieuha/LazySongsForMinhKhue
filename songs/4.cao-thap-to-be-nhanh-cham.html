@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cao Thấp To Bé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#2B2540; --pink:#FF3D7F; --beat:.6s; --sync:0s; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:#1F1A33; display:grid; place-items:center;
+    min-height:100vh; min-height:100dvh; overflow:hidden;
+    font-family:"Baloo 2",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* sân khấu 16:9 luôn vừa màn hình; mọi kích thước con tính theo cqw */
+  .stage{
+    position:fixed; inset:0; --u:min(1cqw,1.7778cqh);
+    overflow:hidden; container-type:size;
+    user-select:none; -webkit-user-select:none; touch-action:manipulation;
+    background:#8ED8FF;
+  }
+
+  /* Hai chế độ hiển thị (nút điện thoại trên thanh điều khiển, nhớ trong localStorage):
+     NGANG (html.land, mặc định): phủ kín màn hình; nếu màn hình đang dọc thì xoay sân khấu 90°
+       để bé chỉ cần xoay điện thoại ngang (không phụ thuộc khoá xoay của máy).
+     DỌC (html.port, kiểu TikTok): phủ kín màn hình dọc, camera bám theo nhân vật.
+     Camera (viewBox) do JS tính theo tỷ lệ sân khấu nên không bao giờ có viền trống. */
+  @media (orientation: portrait){
+    html.land .stage{inset:auto;left:50%;top:50%;width:100vh;height:100vw;
+                     transform:translate(-50%,-50%) rotate(90deg)}
+    @supports (height:100dvh){ html.land .stage{width:100dvh;height:100dvw} }
+  }
+  @media (orientation: landscape){
+    html.port .stage{inset:0 auto;left:50%;width:56.25vh;transform:translateX(-50%)}
+  }
+  /* dọc: nút xuống đáy (ngón cái dễ bấm, không che hình), thẻ động tác lên sát mép trên */
+  html.port .controls{top:auto;left:3cqw;right:3cqw;bottom:calc(3cqw + env(safe-area-inset-bottom));
+                      justify-content:space-between;gap:0}
+  html.port .controls button,html.port .controls a{width:11cqw;height:11cqw}
+  html.port .controls svg{width:5.2cqw;height:5.2cqw}
+  html.port .cue{left:3cqw;right:3cqw;top:calc(3cqw + env(safe-area-inset-top));max-width:none;
+                 gap:3cqw;padding:2cqw 4cqw 2cqw 3cqw;border-radius:6cqw}
+  html.port .cue-icon{font-size:10cqw}
+  html.port .cue-text{font-size:5.4cqw}
+  html.port .title{left:4cqw;right:4cqw;top:32cqw;font-size:15cqw;-webkit-text-stroke-width:1.2cqw;text-align:center}
+  html.port .lyrics{left:3cqw;right:3cqw;bottom:calc(18cqw + env(safe-area-inset-bottom));
+                    padding:7cqw 4cqw 3cqw;border-radius:6cqw;font-size:7cqw}
+  html.port .row{white-space:normal}
+  html.port .ball{width:7cqw;height:7cqw;margin:-6.8cqw 0 0 -3.5cqw}
+  html.port .big-play{width:34cqw;height:34cqw}
+  html.port .big-play svg{width:15cqw;height:15cqw}
+  html.port .overlay-label{font-size:7cqw;-webkit-text-stroke-width:.9cqw;text-align:center;padding:0 6cqw}
+  html.port .sparkle{font-size:10cqw}
+
+  /* Chừa chỗ cho tai thỏ / Dynamic Island.
+     Ngang (máy tự xoay): tai thỏ nằm cạnh trái/phải → lùi thẻ, nút, thanh lời theo safe-area hai bên.
+     Dọc trên điện thoại: thẻ chỉ dẫn luôn cách mép trên ≥ 56px (Island cao ~54px), kể cả khi
+     trình duyệt không báo safe-area-inset-top. */
+  html.land .cue{left:calc(2*var(--u) + env(safe-area-inset-left))}
+  html.land .controls{right:calc(2*var(--u) + env(safe-area-inset-right))}
+  html.land .lyrics{left:calc(3*var(--u) + env(safe-area-inset-left));right:calc(3*var(--u) + env(safe-area-inset-right))}
+  @media (pointer: coarse){
+    html.port .cue{top:max(calc(3cqw + env(safe-area-inset-top)), 56px)}
+    html.port .title{top:calc(24cqw + 56px)}
+  }
+  .world{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  /* ---------- trạng thái từng cảnh ----------
+     intro → high → low → big → tiny → fast → slow → dance → (lượt 2) → end */
+  #sky{fill:#8ED8FF;transition:fill 1.2s ease}
+  .world[data-scene=high]  #sky{fill:#7FCBFF}
+  .world[data-scene=low]   #sky{fill:#A6E6D0}
+  .world[data-scene=big]   #sky{fill:#FFD39A}
+  .world[data-scene=tiny]  #sky{fill:#D5C8FF}
+  .world[data-scene=fast]  #sky{fill:#FFE58A}
+  .world[data-scene=slow]  #sky{fill:#BFE7B0}
+  .world[data-scene=dance] #sky{fill:#FFC4DD}
+  .world[data-scene=end]   #sky{fill:#9EDCFF}
+
+  /* đạo cụ từng cảnh: ẩn mặc định, hiện đúng cảnh của nó */
+  .prop{opacity:0;transition:opacity .45s}
+  .world[data-scene=high] #arrowsUp,.world[data-scene=high] #butterfly,
+  .world[data-scene=dance] #butterfly,.world[data-scene=end] #butterfly,
+  .world[data-scene=low] #arrowsDown,.world[data-scene=low] #ladybug,
+  .world[data-scene=big] #boom,
+  .world[data-scene=tiny] #magnifier,.world[data-scene=tiny] #ant,
+  .world[data-scene=fast] #speed,
+  .world[data-scene=slow] #turtle,.world[data-scene=dance] #turtle,.world[data-scene=end] #turtle,
+  .world[data-scene=end] #confetti{opacity:1}
+
+  .nudge-up{animation:nudgeUp calc(var(--beat)*2) ease-in-out infinite;animation-delay:var(--sync)}
+  .nudge-down{animation:nudgeDown calc(var(--beat)*2) ease-in-out infinite;animation-delay:var(--sync)}
+  .boom-ring{transform-box:fill-box;transform-origin:center;animation:ring var(--beat) ease-out infinite;animation-delay:var(--sync)}
+  .boom-star{transform-box:fill-box;transform-origin:center;animation:pulse var(--beat) ease-in-out infinite;animation-delay:var(--sync)}
+  .flap{transform-origin:0 0;animation:flap .32s ease-in-out infinite}
+  .flutter{animation:flutter 2.6s ease-in-out infinite}
+  .crawl{animation:crawl 3.2s ease-in-out infinite}
+  .ant-bob{animation:nudgeUp .5s ease-in-out infinite}
+  .dust{transform-box:fill-box;transform-origin:center;animation:ring .5s ease-out infinite}
+  .fl{transform-box:fill-box;transform-origin:50% 100%;animation:sway 3.2s ease-in-out infinite}
+  .rays{transform-box:fill-box;transform-origin:center;animation:spin 30s linear infinite}
+  .drift{animation:drift 11s ease-in-out infinite}
+  .drift.slow{animation-duration:15s;animation-delay:-5s}
+
+  /* phần thưởng cuối bài: cầu vồng mọc lên sau lưng Thỏ */
+  #rainbow{opacity:0;transform:scale(.5);transform-box:fill-box;transform-origin:50% 100%;
+           transition:opacity .8s,transform 1.1s cubic-bezier(.34,1.4,.64,1)}
+  .world[data-scene=end] #rainbow{opacity:.92;transform:none}
+
+  @keyframes nudgeUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-26px)}}
+  @keyframes nudgeDown{0%,100%{transform:translateY(0)}50%{transform:translateY(26px)}}
+  @keyframes flap{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.25)}}
+  @keyframes flutter{0%,100%{transform:translate(0,0)}25%{transform:translate(18px,-14px)}75%{transform:translate(-16px,8px)}}
+  @keyframes crawl{0%,100%{transform:translateX(-14px)}50%{transform:translateX(14px)}}
+
+  /* ---------- nét mặt (data-mood: smile | grin | wow | happy | sleep) ---------- */
+  .ch .eyes-happy,.ch .eyes-sleep,.ch .m-wow,.ch .m-grin{opacity:0}
+  .ch[data-mood=wow]   .m-smile{opacity:0}  .ch[data-mood=wow]  .m-wow{opacity:1}
+  .ch[data-mood=grin]  .m-smile{opacity:0}  .ch[data-mood=grin] .m-grin{opacity:1}
+  .ch[data-mood=happy] .eyes-open{opacity:0} .ch[data-mood=happy] .eyes-happy{opacity:1}
+  .ch[data-mood=happy] .m-smile{opacity:0}  .ch[data-mood=happy] .m-grin{opacity:1}
+  .ch[data-mood=sleep] .eyes-open{opacity:0} .ch[data-mood=sleep] .eyes-sleep{opacity:1}
+  .eyes-open{transform-box:fill-box;transform-origin:center;transition:transform .2s}
+  .ch[data-mood=wow] .eyes-open{transform:scale(1.3)}
+  .blink{transform-box:fill-box;transform-origin:center;animation:blink 4.2s infinite}
+  .hit{cursor:pointer}
+  #bubbleIn{opacity:0;transform:scale(.3);transform-box:fill-box;transform-origin:0 100%;
+            transition:opacity .2s,transform .3s cubic-bezier(.34,1.56,.64,1)}
+  #bubbleIn.show{opacity:1;transform:scale(1)}
+
+  /* ---------- keyframes ---------- */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{transform:scale(1.07)}50%{transform:scale(1)}}
+  @keyframes drift{0%,100%{transform:translateX(-28px)}50%{transform:translateX(28px)}}
+  @keyframes fall{from{transform:translateY(-40px)}to{transform:translateY(400px)}}
+  @keyframes squish{0%,100%{transform:scale(1.03,.96)}50%{transform:scale(1,1.02)}}
+  @keyframes sway{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+  @keyframes sweep{0%,100%{transform:rotate(-22deg)}50%{transform:rotate(22deg)}}
+  @keyframes confetti{from{transform:translateY(0) rotate(0)}to{transform:translateY(1400px) rotate(720deg)}}
+  @keyframes rise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-320px);opacity:0}}
+  @keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+  @keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(-.6*var(--u)))}}
+  @keyframes pop{0%{transform:scale(.4) rotate(-8deg)}70%{transform:scale(1.08)}100%{transform:none}}
+  @keyframes wobble{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg) scale(1.04)}}
+  @keyframes ring{from{transform:scale(1);opacity:.7}to{transform:scale(1.6);opacity:0}}
+  @keyframes sparkle{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}
+                     100%{transform:translate(-50%,-180%) scale(1.5) rotate(25deg);opacity:0}}
+
+  /* khi phát lại từ một mốc, khởi động lại các animation theo phách cho khớp nhạc */
+  .resync .beat{animation:none !important}
+  .stage.paused .world *{animation-play-state:paused !important}
+
+  /* ---------- chất liệu tranh (engine, dùng chung mọi bài) ----------
+     .light: nắng mềm từ trên trái + viền tối nhẹ quanh mép (chiều sâu);
+     .grain: hạt giấy vẽ bằng canvas lúc tải trang, nhân (multiply) lên toàn cảnh. */
+  .light,.grain{position:absolute;inset:0;pointer-events:none;z-index:1}
+  .light{background:
+    radial-gradient(110% 80% at 22% 0%, rgba(255,248,225,.38), transparent 62%),
+    radial-gradient(150% 120% at 50% 42%, transparent 58%, rgba(40,22,70,.24) 100%)}
+  .grain{opacity:.18;mix-blend-mode:multiply;background-size:200px 200px}
+
+  /* ---------- lớp HTML trên sân khấu ---------- */
+  .cue{
+    position:absolute; left:calc(2*var(--u)); top:calc(2*var(--u)); z-index:3; pointer-events:none;
+    display:flex; align-items:center; gap:calc(1.2*var(--u)); max-width:calc(44*var(--u));
+    padding:calc(.8*var(--u)) calc(2*var(--u)) calc(.8*var(--u)) calc(1.2*var(--u)); background:#fff; border-radius:calc(3*var(--u));
+    box-shadow:0 calc(.5*var(--u)) 0 rgba(43,37,64,.18);
+  }
+  .cue.pop{animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+  .cue-icon{font-size:calc(4.6*var(--u));line-height:1;animation:hop var(--beat) ease-in-out infinite;animation-delay:var(--sync)}
+  .cue-text{font-size:calc(2.4*var(--u));font-weight:800;line-height:1.15;color:var(--ink)}
+
+  .title{
+    position:absolute; left:calc(4*var(--u)); top:calc(12*var(--u)); z-index:5; pointer-events:none;
+    font-size:calc(8*var(--u)); font-weight:800; line-height:1; color:#fff;
+    -webkit-text-stroke:calc(.6*var(--u)) var(--ink); paint-order:stroke fill;
+    opacity:0; transform:scale(.5) rotate(-8deg);
+    transition:opacity .4s, transform .6s cubic-bezier(.34,1.56,.64,1);
+  }
+  .title.show{opacity:1;transform:none}
+  .title.show span{display:inline-block;animation:wobble 2.4s ease-in-out infinite}
+  .title.show span:nth-child(2){animation-delay:-.8s}
+  .title.show span:nth-child(3){animation-delay:-1.6s}
+
+  .lyrics{
+    position:absolute; left:calc(3*var(--u)); right:calc(3*var(--u)); bottom:calc(1.6*var(--u)); z-index:3; pointer-events:none;
+    padding:calc(2.8*var(--u)) calc(2*var(--u)) calc(1.1*var(--u)); text-align:center; background:rgba(255,255,255,.93);
+    border-radius:calc(3*var(--u)); box-shadow:0 calc(.6*var(--u)) 0 rgba(43,37,64,.2);
+    font-size:calc(3.6*var(--u)); font-weight:800; line-height:1.25; color:#B3A9CF;
+  }
+  .row{white-space:nowrap}
+  .syl{display:inline-block;padding:0 .24em;transition:transform .15s,color .15s}
+  .syl.done{color:var(--ink)}
+  .syl.on{color:var(--pink);transform:translateY(-.1em) scale(1.2)}
+  /* âm tiết trong cùng một từ ("Twin-" + "kle"): viết liền, phóng nhẹ hơn để không đè nhau */
+  .syl.join{padding-right:0} .syl.cont{padding-left:0}
+  .syl.on.join,.syl.on.cont{transform:translateY(-.1em) scale(1.08)}
+  .ball{position:absolute;left:0;top:0;width:calc(3.4*var(--u));height:calc(3.4*var(--u));margin:calc(-3.3*var(--u)) 0 0 calc(-1.7*var(--u))}
+  .ball svg{width:100%;height:100%;display:block}
+
+  .controls{position:absolute;right:calc(2*var(--u));top:calc(2*var(--u));z-index:6;display:flex;gap:calc(.8*var(--u))}
+  .controls button,.controls a{
+    width:calc(5*var(--u)); height:calc(5*var(--u)); border:0; border-radius:50%; padding:0; cursor:pointer;
+    display:grid; place-items:center; background:#fff; color:var(--ink);
+    box-shadow:0 calc(.4*var(--u)) 0 rgba(43,37,64,.22); transition:transform .15s;
+  }
+  .controls button:hover{transform:scale(1.08)}
+  .controls button:active{transform:scale(.94)}
+  .controls svg{width:calc(2.4*var(--u));height:calc(2.4*var(--u));fill:currentColor}
+  .controls .main{background:var(--pink);color:#fff}
+
+  .overlay{
+    position:absolute; inset:0; z-index:4; border:0; padding:0; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(2*var(--u));
+    background:rgba(43,37,64,.28); font:inherit;
+  }
+  .overlay[hidden]{display:none}
+  .big-play{position:relative;width:calc(16*var(--u));height:calc(16*var(--u));border-radius:50%;background:var(--pink);
+            display:grid;place-items:center;box-shadow:0 calc(1*var(--u)) 0 rgba(0,0,0,.2)}
+  .big-play::before,.big-play::after{content:"";position:absolute;inset:0;border-radius:50%;
+            border:calc(.8*var(--u)) solid #fff;animation:ring 1.6s ease-out infinite}
+  .big-play::after{animation-delay:.8s}
+  .big-play svg{width:calc(7*var(--u));height:calc(7*var(--u));fill:#fff}
+  .overlay-label{font-size:calc(3.6*var(--u));font-weight:800;color:#fff;-webkit-text-stroke:calc(.45*var(--u)) var(--ink);paint-order:stroke fill}
+
+  .sparkle{position:absolute;z-index:7;pointer-events:none;font-size:calc(4.5*var(--u));
+           animation:sparkle .9s ease-out forwards}
+
+  /* ---------- hướng dẫn cho bố mẹ ---------- */
+  dialog{max-width:min(720px,92vw);border:0;border-radius:20px;padding:24px 28px;color:var(--ink);
+         font-family:inherit;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  dialog::backdrop{background:rgba(20,16,36,.6)}
+  dialog h2{margin:0 0 8px;font-size:28px}
+  dialog h3{margin:18px 0 6px;font-size:20px}
+  dialog ol,dialog ul{margin:0;padding-left:22px;line-height:1.6;font-size:17px}
+  dialog li b{color:var(--pink)}
+  dialog .close{float:right;border:0;background:var(--pink);color:#fff;font:inherit;font-weight:800;
+                font-size:16px;padding:6px 16px;border-radius:999px;cursor:pointer}
+
+  @media (prefers-reduced-motion: reduce){
+    .world *,.cue-icon,.title span{animation:none !important}
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <svg class="world" id="world" viewBox="0 0 1280 720" data-scene="intro"
+       role="img" aria-label="Thỏ con làm mẫu cao thấp, to bé, nhanh chậm trên đồng cỏ">
+    <defs>
+      <symbol id="mini" viewBox="-80 -80 160 160">
+        <ellipse cx="-20" cy="-36" rx="13" ry="34" fill="#FFF6EE" stroke="#5B3A4A" stroke-width="5" transform="rotate(-12 -20 -36)"/>
+        <ellipse cx="20" cy="-36" rx="13" ry="34" fill="#FFF6EE" stroke="#5B3A4A" stroke-width="5" transform="rotate(12 20 -36)"/>
+        <circle cy="18" r="44" fill="#FFF6EE" stroke="#5B3A4A" stroke-width="5"/>
+        <ellipse cx="-15" cy="14" rx="6" ry="8" fill="#3A2A3A"/><ellipse cx="15" cy="14" rx="6" ry="8" fill="#3A2A3A"/>
+        <ellipse cx="-26" cy="30" rx="7" ry="4" fill="#FF9AB5"/><ellipse cx="26" cy="30" rx="7" ry="4" fill="#FF9AB5"/>
+        <path d="M-5 26 L5 26 L0 32 Z" fill="#FF7AA0"/>
+      </symbol>
+      <symbol id="cloud" viewBox="-120 -80 240 150">
+        <g fill="currentColor"><circle cx="-62" cy="12" r="42"/><circle cx="0" cy="-12" r="56"/>
+          <circle cx="62" cy="12" r="42"/><rect x="-104" y="12" width="208" height="46" rx="23"/></g>
+        <rect x="-104" y="34" width="208" height="24" rx="12" fill="#000" opacity=".06"/>
+      </symbol>
+      <symbol id="flower" viewBox="-30 -80 60 90">
+        <path d="M0 10 V-40" stroke="#3F9E3A" stroke-width="5" stroke-linecap="round"/>
+        <ellipse cx="9" cy="-14" rx="10" ry="5" fill="#5BC24F" transform="rotate(-30 9 -14)"/>
+        <g fill="currentColor" stroke="#00000022" stroke-width="2">
+          <circle cy="-66" r="11"/><circle cx="12" cy="-56" r="11"/><circle cx="-12" cy="-56" r="11"/>
+          <circle cx="8" cy="-42" r="11"/><circle cx="-8" cy="-42" r="11"/></g>
+        <circle cy="-53" r="9" fill="#FFD23F"/>
+        <circle cx="-3" cy="-55" r="1.6" fill="#3A2A1A"/><circle cx="3" cy="-55" r="1.6" fill="#3A2A1A"/>
+      </symbol>
+      <radialGradient id="bunnyGrad" cx=".38" cy=".3" r=".8">
+        <stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#FFF1E6"/><stop offset="1" stop-color="#EBCDBE"/></radialGradient>
+      <radialGradient id="shellGrad" cx=".4" cy=".25" r=".85">
+        <stop offset="0" stop-color="#9EDB7E"/><stop offset=".6" stop-color="#5BB35E"/><stop offset="1" stop-color="#2F7A45"/></radialGradient>
+      <radialGradient id="sunHalo"><stop offset=".35" stop-color="#FFF3B0" stop-opacity=".8"/>
+        <stop offset="1" stop-color="#FFF3B0" stop-opacity="0"/></radialGradient>
+      <radialGradient id="leafGrad" cx=".35" cy=".3" r=".8">
+        <stop offset="0" stop-color="#8EDB6A"/><stop offset="1" stop-color="#3E9A45"/></radialGradient>
+      <linearGradient id="skyLight" gradientUnits="userSpaceOnUse" x1="0" y1="-300" x2="0" y2="540">
+        <stop offset="0" stop-color="#3D6FD8" stop-opacity=".28"/><stop offset=".7" stop-color="#FFFFFF" stop-opacity="0"/>
+        <stop offset="1" stop-color="#FFF4D6" stop-opacity=".5"/></linearGradient>
+      <linearGradient id="groundShade" gradientUnits="userSpaceOnUse" x1="0" y1="540" x2="0" y2="760">
+        <stop offset="0" stop-color="#FFF8D0" stop-opacity=".18"/><stop offset="1" stop-color="#1D4A18" stop-opacity=".35"/></linearGradient>
+    </defs>
+
+    <rect id="sky" x="-700" y="-1300" width="2680" height="2200"/>
+    <rect x="-700" y="-1300" width="2680" height="2200" fill="url(#skyLight)"/>
+
+    <!-- mặt trời -->
+    <g transform="translate(170 120)">
+      <circle r="150" fill="url(#sunHalo)"/>
+      <g class="rays" stroke="#FFC93C" stroke-width="10" stroke-linecap="round">
+        <path d="M0 -100 V-80 M0 100 V80 M-100 0 H-80 M100 0 H80 M-71 -71 L-57 -57 M71 -71 L57 -57 M-71 71 L-57 57 M71 71 L57 57"/></g>
+      <circle r="58" fill="#FFD23F" stroke="#F2A900" stroke-width="5"/>
+      <ellipse cx="-20" cy="-24" rx="14" ry="8" fill="#fff" opacity=".45" transform="rotate(-30 -20 -24)"/>
+      <ellipse cx="-18" cy="-4" rx="5" ry="7" fill="#5A3A1A"/><ellipse cx="18" cy="-4" rx="5" ry="7" fill="#5A3A1A"/>
+      <path d="M-14 16 Q0 28 14 16" fill="none" stroke="#5A3A1A" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="-34" cy="12" rx="8" ry="5" fill="#FF9A6B" opacity=".7"/><ellipse cx="34" cy="12" rx="8" ry="5" fill="#FF9A6B" opacity=".7"/>
+    </g>
+
+    <g>
+      <g transform="translate(560 130)"><g class="drift"><use href="#cloud" x="-90" y="-56" width="180" height="112" color="#FFFFFF"/></g></g>
+      <g transform="translate(1000 200)"><g class="drift slow"><use href="#cloud" x="-70" y="-44" width="140" height="88" color="#FFFFFF"/></g></g>
+      <g transform="translate(-260 220)"><g class="drift slow"><use href="#cloud" x="-70" y="-44" width="140" height="88" color="#FFFFFF"/></g></g>
+      <g transform="translate(1600 110)"><g class="drift"><use href="#cloud" x="-80" y="-50" width="160" height="100" color="#FFFFFF"/></g></g>
+    </g>
+
+    <!-- đồi xa / đồi gần -->
+    <path d="M-700 420 Q-250 330 200 410 T1000 390 T1980 400 V900 H-700 Z" fill="#BDE5A0"/>
+    <path d="M-700 470 Q-200 410 300 460 Q700 400 1100 455 T1980 445 V900 H-700 Z" fill="#94D474"/>
+
+    <!-- cây bên phải -->
+    <g>
+      <path d="M1030 556 C1035 470 1020 400 1046 330 L1086 330 C1074 400 1092 470 1098 556 Z" fill="#A0663F" stroke="#5A3A22" stroke-width="4"/>
+      <path d="M1048 360 q10 30 0 60 M1080 470 q-8 25 2 50" fill="none" stroke="#7A4A2A" stroke-width="3" stroke-linecap="round"/>
+      <g stroke="#2F6E30" stroke-width="4">
+        <circle cx="1000" cy="300" r="70" fill="url(#leafGrad)"/><circle cx="1090" cy="250" r="86" fill="url(#leafGrad)"/>
+        <circle cx="1170" cy="310" r="64" fill="url(#leafGrad)"/><circle cx="1070" cy="340" r="58" fill="url(#leafGrad)"/>
+      </g>
+      <g fill="#FF5A5A" stroke="#B8323A" stroke-width="2.5"><circle cx="1030" cy="280" r="11"/><circle cx="1120" cy="230" r="11"/><circle cx="1150" cy="330" r="11"/></g>
+      <g fill="#C8F0A8" opacity=".55"><circle cx="1060" cy="200" r="12"/><circle cx="980" cy="270" r="9"/></g>
+    </g>
+
+    <!-- cầu vồng (phần thưởng cuối bài) -->
+    <g id="rainbow">
+      <path d="M170 560 A470 470 0 0 1 1110 560" fill="none" stroke="#FF5A5A" stroke-width="26"/>
+      <path d="M196 560 A444 444 0 0 1 1084 560" fill="none" stroke="#FF9F43" stroke-width="26"/>
+      <path d="M222 560 A418 418 0 0 1 1058 560" fill="none" stroke="#FFD23F" stroke-width="26"/>
+      <path d="M248 560 A392 392 0 0 1 1032 560" fill="none" stroke="#5BD66B" stroke-width="26"/>
+      <path d="M274 560 A366 366 0 0 1 1006 560" fill="none" stroke="#4FB3FF" stroke-width="26"/>
+      <path d="M300 560 A340 340 0 0 1 980 560" fill="none" stroke="#7B6BFF" stroke-width="26"/>
+      <path d="M326 560 A314 314 0 0 1 954 560" fill="none" stroke="#E07BFF" stroke-width="26"/>
+    </g>
+
+    <!-- mặt đất -->
+    <rect id="ground" x="-700" y="540" width="2680" height="1700" fill="#7BC95A"/>
+    <rect x="-700" y="440" width="2680" height="400" fill="url(#groundShade)"/>
+    <g fill="none" stroke="#4FA53A" stroke-width="4" stroke-linecap="round" opacity=".7">
+      <path d="M-120 562 q4 -12 8 0 q4 -10 8 0"/><path d="M90 572 q4 -12 8 0 q4 -10 8 0"/><path d="M470 566 q4 -12 8 0 q4 -10 8 0"/>
+      <path d="M820 576 q4 -12 8 0 q4 -10 8 0"/><path d="M1240 564 q4 -12 8 0 q4 -10 8 0"/><path d="M1500 570 q4 -12 8 0 q4 -10 8 0"/>
+    </g>
+    <g id="flowers"></g>
+
+    <!-- đạo cụ "cao": mũi tên lên + bướm trên cao -->
+    <g id="arrowsUp" class="prop" fill="#FF5A8A" stroke="#fff" stroke-width="6" stroke-linejoin="round">
+      <g transform="translate(450 330)"><g class="nudge-up"><path d="M0 -60 L40 -14 H16 V50 H-16 V-14 H-40 Z"/></g></g>
+      <g transform="translate(830 330)"><g class="nudge-up" style="animation-delay:calc(var(--sync) - .3s)"><path d="M0 -60 L40 -14 H16 V50 H-16 V-14 H-40 Z"/></g></g>
+    </g>
+    <g id="butterfly" class="prop"><g transform="translate(760 140)"><g class="flutter">
+      <g class="flap">
+        <ellipse cx="-24" cy="-14" rx="26" ry="20" fill="#FF8FC7" stroke="#B8407A" stroke-width="3"/>
+        <ellipse cx="24" cy="-14" rx="26" ry="20" fill="#FF8FC7" stroke="#B8407A" stroke-width="3"/>
+        <ellipse cx="-18" cy="14" rx="16" ry="13" fill="#B98CFF" stroke="#6E4AB8" stroke-width="3"/>
+        <ellipse cx="18" cy="14" rx="16" ry="13" fill="#B98CFF" stroke="#6E4AB8" stroke-width="3"/>
+        <circle cx="-26" cy="-16" r="6" fill="#FFE066"/><circle cx="26" cy="-16" r="6" fill="#FFE066"/>
+      </g>
+      <ellipse rx="6" ry="24" fill="#5B3A4A"/>
+      <path d="M-3 -22 Q-10 -40 -16 -42 M3 -22 Q10 -40 16 -42" fill="none" stroke="#5B3A4A" stroke-width="3" stroke-linecap="round"/>
+    </g></g></g>
+
+    <!-- đạo cụ "thấp": mũi tên xuống + bọ rùa sát đất -->
+    <g id="arrowsDown" class="prop" fill="#4FB3FF" stroke="#fff" stroke-width="6" stroke-linejoin="round">
+      <g transform="translate(450 300)"><g class="nudge-down"><path d="M0 60 L40 14 H16 V-50 H-16 V14 H-40 Z"/></g></g>
+      <g transform="translate(830 300)"><g class="nudge-down" style="animation-delay:calc(var(--sync) - .3s)"><path d="M0 60 L40 14 H16 V-50 H-16 V14 H-40 Z"/></g></g>
+    </g>
+    <g id="ladybug" class="prop"><g transform="translate(770 552)"><g class="crawl">
+      <circle cx="26" cy="-14" r="11" fill="#3A2A3A"/>
+      <circle cx="29" cy="-17" r="3" fill="#fff"/><circle cx="34" cy="-15" r="3" fill="#fff"/>
+      <path d="M-24 0 A24 22 0 0 1 24 0 Z" fill="#FF4D4D" stroke="#9E1F2A" stroke-width="3"/>
+      <path d="M0 -21 V0" stroke="#3A2A3A" stroke-width="3"/>
+      <g fill="#3A2A3A"><circle cx="-12" cy="-10" r="4"/><circle cx="11" cy="-12" r="4"/><circle cx="-6" cy="-3" r="3"/><circle cx="12" cy="-3" r="3"/></g>
+      <ellipse cx="-8" cy="-16" rx="6" ry="3" fill="#fff" opacity=".5"/>
+    </g></g></g>
+
+    <!-- đạo cụ "to": vòng sóng dưới chân + sao bùng -->
+    <g id="boom" class="prop">
+      <ellipse class="boom-ring" cx="640" cy="552" rx="150" ry="26" fill="none" stroke="#fff" stroke-width="8"/>
+      <ellipse class="boom-ring" cx="640" cy="552" rx="150" ry="26" fill="none" stroke="#FFE066" stroke-width="6" style="animation-delay:calc(var(--sync) - .3s)"/>
+      <g fill="#FFE066" stroke="#F29A00" stroke-width="3" stroke-linejoin="round">
+        <path class="boom-star" d="M360 300 l12 26 28 4 -20 20 5 28 -25 -13 -25 13 5 -28 -20 -20 28 -4 Z"/>
+        <path class="boom-star" d="M900 260 l12 26 28 4 -20 20 5 28 -25 -13 -25 13 5 -28 -20 -20 28 -4 Z"/>
+        <path class="boom-star" d="M410 470 l8 17 18 3 -13 13 3 18 -16 -9 -16 9 3 -18 -13 -13 18 -3 Z"/>
+        <path class="boom-star" d="M860 450 l8 17 18 3 -13 13 3 18 -16 -9 -16 9 3 -18 -13 -13 18 -3 Z"/>
+      </g>
+    </g>
+
+    <!-- đạo cụ "bé tí xíu": bạn kiến cùng cỡ -->
+    <g id="ant" class="prop"><g transform="translate(722 552) scale(1.15)"><g class="ant-bob">
+      <path d="M-20 -6 l-8 6 M-6 -8 l-4 8 M4 -8 l4 8 M-14 -8 l-2 8" stroke="#4A2A22" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="-20" cy="-16" r="12" fill="#8A4A36" stroke="#4A2A22" stroke-width="2.5"/>
+      <circle cx="-3" cy="-17" r="8" fill="#8A4A36" stroke="#4A2A22" stroke-width="2.5"/>
+      <circle cx="13" cy="-24" r="11" fill="#9C5A42" stroke="#4A2A22" stroke-width="2.5"/>
+      <path d="M10 -34 Q8 -46 0 -48 M17 -34 Q22 -46 30 -46" fill="none" stroke="#4A2A22" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="10" cy="-26" r="2.6" fill="#1E1A30"/><circle cx="18" cy="-26" r="2.6" fill="#1E1A30"/>
+      <path d="M10 -19 Q14 -16 18 -19" fill="none" stroke="#1E1A30" stroke-width="2" stroke-linecap="round"/>
+      <ellipse cx="6" cy="-20" rx="3" ry="2" fill="#FF9AB5"/>
+    </g></g></g>
+
+    <!-- đạo cụ "nhanh": vệt gió + bụi, JS đặt theo Thỏ -->
+    <g id="speed" class="prop">
+      <g stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".85">
+        <path d="M-80 -60 H-200"/><path d="M-90 -120 H-240"/><path d="M-80 -180 H-180"/></g>
+      <g fill="#F3E2C3" stroke="#D6BE94" stroke-width="2">
+        <circle class="dust" cx="-70" cy="-10" r="16"/><circle class="dust" cx="-110" cy="-14" r="12" style="animation-delay:-.25s"/></g>
+    </g>
+
+    <!-- bạn Rùa: gốc ở chân, hướng sang phải; JS đặt vị trí -->
+    <g id="turtle" class="prop ch" data-mood="happy">
+      <g id="turtleBody">
+        <path d="M-84 -22 L-104 -12 L-82 -10 Z" fill="#8FD16F" stroke="#2F6E30" stroke-width="3" stroke-linejoin="round"/>
+        <g id="tLegsA" fill="#8FD16F" stroke="#2F6E30" stroke-width="3.5"><ellipse cx="-52" cy="-10" rx="14" ry="16"/><ellipse cx="30" cy="-10" rx="14" ry="16"/></g>
+        <g id="tLegsB" fill="#7DC25E" stroke="#2F6E30" stroke-width="3.5"><ellipse cx="-24" cy="-8" rx="13" ry="14"/><ellipse cx="58" cy="-8" rx="13" ry="14"/></g>
+        <circle cx="92" cy="-50" r="28" fill="#9EDB7E" stroke="#2F6E30" stroke-width="3.5"/>
+        <ellipse cx="84" cy="-62" rx="9" ry="5" fill="#fff" opacity=".4"/>
+        <g class="eyes-open"><g class="blink"><ellipse cx="86" cy="-54" rx="5" ry="7" fill="#1E1A30"/><ellipse cx="104" cy="-54" rx="5" ry="7" fill="#1E1A30"/>
+          <circle cx="88" cy="-57" r="2" fill="#fff"/><circle cx="106" cy="-57" r="2" fill="#fff"/></g></g>
+        <g class="eyes-happy" fill="none" stroke="#1E1A30" stroke-width="3.5" stroke-linecap="round"><path d="M80 -52 Q86 -60 92 -52"/><path d="M98 -52 Q104 -60 110 -52"/></g>
+        <g class="eyes-sleep" fill="none" stroke="#1E1A30" stroke-width="3.5" stroke-linecap="round"><path d="M80 -55 Q86 -50 92 -55"/><path d="M98 -55 Q104 -50 110 -55"/></g>
+        <ellipse cx="78" cy="-40" rx="6" ry="4" fill="#FF9AB5"/><ellipse cx="112" cy="-40" rx="5" ry="4" fill="#FF9AB5"/>
+        <path class="m-smile" d="M90 -40 Q96 -34 102 -40" fill="none" stroke="#1E1A30" stroke-width="3" stroke-linecap="round"/>
+        <ellipse class="m-wow" cx="96" cy="-38" rx="4" ry="5" fill="#C2405F"/>
+        <path class="m-grin" d="M88 -42 Q96 -28 104 -42 Z" fill="#C2405F"/>
+        <path d="M-82 -22 Q-80 -112 0 -114 Q80 -112 82 -22 Z" fill="url(#shellGrad)" stroke="#2F6E30" stroke-width="4"/>
+        <g fill="none" stroke="#C8F0A8" stroke-width="4" stroke-linejoin="round" opacity=".75">
+          <path d="M-22 -86 L22 -86 L36 -60 L22 -34 L-22 -34 L-36 -60 Z"/><path d="M-36 -60 L-70 -54 M36 -60 L70 -54 M-22 -86 L-40 -104 M22 -86 L40 -104"/></g>
+        <ellipse cx="-34" cy="-92" rx="16" ry="7" fill="#fff" opacity=".35" transform="rotate(-20 -34 -92)"/>
+        <rect x="-88" y="-28" width="176" height="16" rx="8" fill="#F6D27A" stroke="#B88A2A" stroke-width="3"/>
+      </g>
+    </g>
+
+    <ellipse id="shadow" cx="640" cy="554" rx="70" ry="13" fill="#1D3A12" opacity=".22"/>
+
+    <!-- Thỏ con: gốc ở giữa hai bàn chân (y = 0), thân cao ~280 kể cả tai -->
+    <g id="bunny" class="ch" data-mood="smile" transform="translate(640 548)">
+      <g id="footL"><ellipse cx="-26" cy="-11" rx="25" ry="13" fill="url(#bunnyGrad)" stroke="#5B3A4A" stroke-width="4"/>
+        <ellipse cx="-26" cy="-9" rx="9" ry="5" fill="#FFB3C8"/></g>
+      <g id="footR"><ellipse cx="26" cy="-11" rx="25" ry="13" fill="url(#bunnyGrad)" stroke="#5B3A4A" stroke-width="4"/>
+        <ellipse cx="26" cy="-9" rx="9" ry="5" fill="#FFB3C8"/></g>
+      <g id="torso">
+        <circle cx="48" cy="-34" r="17" fill="#FFFFFF" stroke="#5B3A4A" stroke-width="4"/>
+        <ellipse cy="-68" rx="50" ry="60" fill="url(#bunnyGrad)" stroke="#5B3A4A" stroke-width="4"/>
+        <ellipse cy="-58" rx="30" ry="36" fill="#FFFDF8"/>
+        <ellipse cx="-22" cy="-96" rx="10" ry="16" fill="#fff" opacity=".6" transform="rotate(25 -22 -96)"/>
+      </g>
+      <g id="upper">
+        <g transform="translate(-24 -196)"><g id="earL">
+          <ellipse cy="-46" rx="18" ry="54" fill="url(#bunnyGrad)" stroke="#5B3A4A" stroke-width="4"/>
+          <ellipse cy="-42" rx="8" ry="38" fill="#FFB3C8"/></g></g>
+        <g transform="translate(24 -196)"><g id="earR">
+          <ellipse cy="-46" rx="18" ry="54" fill="url(#bunnyGrad)" stroke="#5B3A4A" stroke-width="4"/>
+          <ellipse cy="-42" rx="8" ry="38" fill="#FFB3C8"/></g></g>
+        <circle cy="-150" r="62" fill="url(#bunnyGrad)" stroke="#5B3A4A" stroke-width="4"/>
+        <ellipse cx="-24" cy="-186" rx="16" ry="9" fill="#fff" opacity=".8" transform="rotate(-25 -24 -186)"/>
+        <!-- nơ hồng (phụ kiện nổi) -->
+        <g transform="translate(34 -200) rotate(18)">
+          <path d="M0 0 L-24 -14 L-24 14 Z M0 0 L24 -14 L24 14 Z" fill="#FF5A8A" stroke="#B8285A" stroke-width="3" stroke-linejoin="round"/>
+          <circle r="7" fill="#FF8FB0" stroke="#B8285A" stroke-width="3"/></g>
+        <g class="eyes-open"><g class="blink">
+          <ellipse cx="-22" cy="-152" rx="9" ry="12" fill="#3A2A3A"/><ellipse cx="22" cy="-152" rx="9" ry="12" fill="#3A2A3A"/>
+          <circle cx="-18" cy="-157" r="4" fill="#fff"/><circle cx="26" cy="-157" r="4" fill="#fff"/>
+          <circle cx="-24" cy="-147" r="1.8" fill="#fff"/><circle cx="20" cy="-147" r="1.8" fill="#fff"/></g></g>
+        <g class="eyes-happy" fill="none" stroke="#3A2A3A" stroke-width="5" stroke-linecap="round">
+          <path d="M-32 -148 Q-22 -162 -12 -148"/><path d="M12 -148 Q22 -162 32 -148"/></g>
+        <g class="eyes-sleep" fill="none" stroke="#3A2A3A" stroke-width="5" stroke-linecap="round">
+          <path d="M-32 -153 Q-22 -144 -12 -153"/><path d="M12 -153 Q22 -144 32 -153"/></g>
+        <ellipse cx="-38" cy="-128" rx="11" ry="6" fill="#FF9AB5"/><ellipse cx="38" cy="-128" rx="11" ry="6" fill="#FF9AB5"/>
+        <path d="M-6 -136 L6 -136 L0 -129 Z" fill="#FF7AA0" stroke="#C2405F" stroke-width="2" stroke-linejoin="round"/>
+        <path class="m-smile" d="M-10 -124 Q-5 -118 0 -124 Q5 -118 10 -124" fill="none" stroke="#3A2A3A" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse class="m-wow" cy="-117" rx="7" ry="9" fill="#C2405F" stroke="#3A2A3A" stroke-width="2.5"/>
+        <g class="m-grin"><path d="M-13 -126 Q0 -102 13 -126 Z" fill="#C2405F" stroke="#3A2A3A" stroke-width="2.5" stroke-linejoin="round"/>
+          <rect x="-5" y="-127" width="10" height="7" rx="2" fill="#fff"/></g>
+        <!-- tay vẽ sau đầu để khi giơ cao không bị đầu che -->
+        <g transform="translate(-44 -106)"><g id="armL">
+          <rect x="-12" y="-4" width="24" height="58" rx="12" fill="url(#bunnyGrad)" stroke="#5B3A4A" stroke-width="4"/>
+          <circle cy="52" r="13" fill="#FFF6EE" stroke="#5B3A4A" stroke-width="4"/></g></g>
+        <g transform="translate(44 -106)"><g id="armR">
+          <rect x="-12" y="-4" width="24" height="58" rx="12" fill="url(#bunnyGrad)" stroke="#5B3A4A" stroke-width="4"/>
+          <circle cy="52" r="13" fill="#FFF6EE" stroke="#5B3A4A" stroke-width="4"/></g></g>
+      </g>
+      <circle class="hit" cy="-130" r="110" fill="transparent" id="bunnyHit"/>
+    </g>
+
+    <!-- kính lúp quanh Thỏ tí xíu -->
+    <g id="magnifier" class="prop" transform="translate(640 492)">
+      <circle r="92" fill="#E8F7FF" fill-opacity=".18" stroke="#9A6237" stroke-width="12"/>
+      <path d="M-62 -40 A74 74 0 0 1 -30 -68" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".8"/>
+      <path d="M66 -66 L130 -130" stroke="#C7834A" stroke-width="22" stroke-linecap="round"/>
+      <path d="M66 -66 L130 -130" stroke="#7A4A2A" stroke-width="22" stroke-linecap="round" stroke-dasharray="0 1" fill="none"/>
+    </g>
+
+    <g id="confetti" class="prop"></g>
+
+    <g id="bubble">
+      <g id="bubbleIn">
+        <path d="M0 0 L18 -26 H-6 Z" fill="#fff"/>
+        <rect x="-10" y="-86" width="150" height="62" rx="26" fill="#fff"/>
+        <text id="bubbleText" x="65" y="-44" text-anchor="middle" font-size="32" font-weight="800" fill="#FF3D7F"
+              font-family="'Baloo 2',system-ui,sans-serif">Hihi!</text>
+      </g>
+    </g>
+  </svg>
+  <div class="light"></div>
+  <div class="grain" id="grain"></div>
+
+  <div class="cue" id="cue"><span class="cue-icon beat" id="cueIcon">💃</span><span class="cue-text" id="cueText"></span></div>
+  <div class="title" id="title"></div>
+  <div class="lyrics" id="lyrics">
+    <div id="rows"></div>
+    <div class="ball" id="ball"><svg viewBox="-60 -60 120 120"><use href="#mini" x="-60" y="-60" width="120" height="120"/></svg></div>
+  </div>
+
+  <div class="controls">
+    <a href="../index.html" aria-label="Về trang chủ"><svg viewBox="0 0 24 24"><path d="M12 3.5 2.5 11.5h2.8V20h5v-5.5h3.4V20h5v-8.5h2.8z"/></svg></a>
+    <button id="btnPrev" aria-label="Cảnh trước"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5v14L9.5 12z"/></svg></button>
+    <button id="btnPlay" class="main" aria-label="Phát / tạm dừng"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
+    <button id="btnNext" aria-label="Cảnh sau"><svg viewBox="0 0 24 24"><path d="M15.5 5H18v14h-2.5zM4 5v14l10.5-7z"/></svg></button>
+    <button id="btnFull" aria-label="Toàn màn hình"><svg viewBox="0 0 24 24"><path d="M4 4h6v2.5H6.5V10H4zm10 0h6v6h-2.5V6.5H14zM4 14h2.5v3.5H10V20H4zm13.5 0H20v6h-6v-2.5h3.5z"/></svg></button>
+    <button id="btnMode" aria-label="Đổi màn ngang / dọc"><svg viewBox="0 0 24 24" id="modeIcon"></svg></button>
+    <button id="btnGuide" aria-label="Lời bài hát và động tác"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm1.2 14h-2.4v-6.5h2.4zm-1.2-8.2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></button>
+  </div>
+
+  <button class="overlay" id="overlay">
+    <span class="big-play"><svg viewBox="0 0 24 24" id="overlayIcon"><path d="M7 4.5v15l12.5-7.5z"/></svg></span>
+    <span class="overlay-label" id="overlayLabel">Bấm để hát cùng Thỏ Con!</span>
+  </button>
+</div>
+
+<dialog id="guide">
+  <button class="close" id="guideClose">Đóng</button>
+  <h2>🐰 Cao Thấp To Bé</h2>
+  <p style="margin:0;color:#7A7195">Bài hát cặp từ trái nghĩa, nhịp 4/4 ~100 BPM, dài ~1 phút 25: đếm nhịp → 1 lượt → đoạn nhảy → 1 lượt → kết. Âm nhạc cũng “diễn” theo từ: cao thì nốt đi lên, thấp đi xuống, to trầm vang, bé tí xíu cao lí nhí, nhanh thì câu ngắn dồn dập, chậm thì câu dài ngân nga.</p>
+  <h3>Lời &amp; động tác</h3>
+  <ol>
+    <li><b>Đây là cao, cao, cao, cao!</b><br>🙌 Kiễng chân, giơ tay thật cao (Thỏ vươn tới bạn Bướm).</li>
+    <li><b>Đây là thấp, thấp, thấp!</b><br>🧎 Ngồi thụp xuống sát đất (cạnh bạn Bọ Rùa).</li>
+    <li><b>Đây là to, to!</b><br>👐 Dang tay thật rộng, phồng má thật to.</li>
+    <li><b>Đây là bé tí xíu!</b><br>🤏 Chụm hai ngón tay, nói thật nhỏ (Thỏ bé bằng bạn Kiến).</li>
+    <li><b>Đây là nhanh, nhanh!</b><br>🏃 Chạy tại chỗ thật nhanh.</li>
+    <li><b>Đây là chậm, chậm, chậm…</b><br>🐢 Bước thật chậm như bạn Rùa.</li>
+    <li><b>Nhún nhún, nhảy nhảy, vui quá! / Vỗ tay nào! Bốp bốp bốp!</b><br>👏 Nhún nhảy rồi vỗ tay.</li>
+    <li><b>Bé giỏi quá! Yeee!</b> — 🤗 ôm một cái thật chặt.</li>
+  </ol>
+  <h3>Mẹo</h3>
+  <ul>
+    <li>Bố mẹ làm động tác thật phóng đại (cao hết cỡ, thấp sát đất) — bé hiểu nghĩa từ qua cơ thể.</li>
+    <li>Hát xong, thử hỏi bé “Cái gì cao? Cái gì bé?” rồi chỉ vào đồ vật trong nhà.</li>
+    <li>Chạm vào Thỏ: Thỏ lộn vòng cười “Hihi!”.</li>
+    <li>Phím tắt: <b>Space</b> phát/dừng · <b>← →</b> chuyển cảnh · <b>F</b> toàn màn hình.</li>
+    <li>Nút hình điện thoại đổi màn ngang / dọc. iPhone/iPad không có tiếng? Gạt tắt chế độ im lặng.</li>
+  </ul>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ================= BÀI HÁT =================
+     Đơn vị thời gian là nốt móc đơn (E giây). Nhịp 4/4: mỗi phách = 2 móc đơn,
+     mỗi câu hát = 1 slide = 2 ô nhịp = 16 móc đơn (len ghi đè khi khác).
+     Âm tiết: [chữ, nốt, độ dài]; "/" ở đầu chữ = xuống dòng; "-" ở cuối = nối với âm tiết sau thành một từ;
+     pick = số móc đơn hát lấy đà trước câu; soft = câu nhẹ (bỏ trống); rush = tiếng lắc dồn gấp đôi.
+     Bài này để chính âm nhạc diễn tả từ: cao = nốt đi lên, thấp = đi xuống, to = nốt trầm vang,
+     bé tí xíu = nốt cao lí nhí, nhanh = câu ngắn nốt dồn, chậm = câu dài nốt ngân. */
+  const E = 0.3, BEAT = 2 * E, LINE = 16;
+  const NOTE = { C4:261.63, G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880,
+                 C6:1046.5, D6:1174.66, E6:1318.51 };
+  const CHORD = {
+    C: { bass:[130.81, 98.00],  pad:[261.63, 329.63, 392.00] },
+    F: { bass:[87.31, 130.81],  pad:[261.63, 349.23, 440.00] },
+    G: { bass:[98.00, 146.83],  pad:[246.94, 293.66, 392.00] },
+  };
+
+  const SCENES = {
+    intro: { icon:'💃', text:'Đứng dậy, sẵn sàng nào!' },
+    high:  { icon:'🙌', text:'Kiễng chân, giơ tay thật cao!' },
+    low:   { icon:'🧎', text:'Ngồi thụp xuống thật thấp!' },
+    big:   { icon:'👐', text:'Dang tay thật to!' },
+    tiny:  { icon:'🤏', text:'Chụm ngón tay bé tí xíu!' },
+    fast:  { icon:'🏃', text:'Chạy tại chỗ thật nhanh!' },
+    slow:  { icon:'🐢', text:'Bước thật chậm… chậm…' },
+    dance: { icon:'👏', text:'Nhún nhảy, vỗ tay bốp bốp!' },
+    end:   { icon:'🤗', text:'Ôm một cái thật chặt!' },
+  };
+  const TITLES = {
+    intro: '<span style="color:#FF5A8A">Cao</span> <span style="color:#4FB3FF">Thấp</span> <span style="color:#FF9F43">To</span> <span style="color:#9B6BFF">Bé</span>',
+    end:   '<span>Bé</span> <span style="color:#FFE066">giỏi</span> <span style="color:#7FE3FF">quá!</span>',
+  };
+  const START_LABEL = 'Bấm để hát cùng Thỏ Con!';
+
+  const INTRO = { scene:'intro', chords:'C C G G C C G G',
+    syl:[['Một','tick',4],['hai','tick',4],['ba,','tick',4],['nhảy nào!','tick',4]] };
+  const VERSE = [
+    { scene:'high', chords:'G G C C C C C C',
+      syl:[['Đây','G4',2],['là','C5',2],['cao,','E5',2],['cao,','G5',2],['cao,','C6',2],['cao!','E6',6]] },
+    { scene:'low', chords:'C C C C F F C C',
+      syl:[['Đây','G5',2],['là','E5',2],['thấp,','C5',2],['thấp,','G4',2],['thấp!','C4',8]] },
+    { scene:'big', chords:'C C F F C C C C',
+      syl:[['Đây','C5',2],['là','C5',2],['to,','C4',4],['to!','C4',8]] },
+    { scene:'tiny', chords:'C C C C C C C C',
+      syl:[['Đây','G5',2],['là','G5',2],['bé','C6',2],['tí','D6',2],['xíu!','E6',8]] },
+    { scene:'fast', len:12, rush:true, chords:'C C G G C C',
+      syl:[['Đây','C5',1],['là','E5',1],['nhanh,','G5',1],['nhanh!','C6',3]] },
+    { scene:'slow', len:24, chords:'C C G G C C F F C C C C',
+      syl:[['Đây','E5',4],['là','D5',4],['chậm,','C5',4],['chậm,','A4',4],['chậm…','G4',8]] },
+  ];
+  const DANCE = [
+    { scene:'dance', chords:'C C C C F F C C',
+      syl:[['Nhún','G5',2],['nhún,','E5',2],['nhảy','G5',2],['nhảy,','E5',2],['vui','C6',4],['quá!','G5',4]] },
+    { scene:'dance', chords:'C F C C C G C C',
+      syl:[['Vỗ','G5',2],['tay','A5',2],['nào!','C6',4],['/Bốp','clap',2],['bốp','clap',2],['bốp!','clap',4]] },
+  ];
+  const OUTRO = { scene:'end', len:24, chords:'C C C C F F C C C C C C',
+    syl:[['Bé','C5',3],['giỏi','E5',3],['quá!','G5',6],['/Yeee!','C6',12]] };
+
+  const SONG = [INTRO, ...VERSE, ...DANCE, ...VERSE, OUTRO];
+
+  // Đổi đơn vị móc đơn sang giây; "show" = lúc câu bắt đầu hiện (kể cả nốt lấy đà)
+  let cursor = 0;
+  const lines = SONG.map(spec => {
+    const start = cursor, len = spec.len || LINE;
+    cursor += len;
+    let pos = start + (spec.pick || 0);
+    const syl = spec.syl.map(([raw, note, d]) => {
+      const s = { text: raw.replace(/^\//, ''), br: raw.startsWith('/'), note, t: pos * E, d: d * E };
+      pos += d;
+      return s;
+    });
+    return { ...spec, len, start: start * E, show: Math.min(start * E, syl[0].t), syl };
+  });
+  lines[0].show = 0;
+  const sceneStarts = lines.filter((L, k) => k === 0 || L.scene !== lines[k - 1].scene).map(L => L.show);
+
+  /* ================= ÂM THANH (Web Audio, không cần file nhạc) ================= */
+  const A = { ctx:null, out:null, bus:null, fx:null, noise:null };
+
+  function ensureAudio() {
+    if (!A.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      A.ctx = new AC();
+      const comp = A.ctx.createDynamicsCompressor();
+      A.out = A.ctx.createGain();
+      A.out.gain.value = .8;
+      A.out.connect(comp); comp.connect(A.ctx.destination);
+      A.fx = A.ctx.createGain(); A.fx.connect(A.out);       // tiếng chạm của bé, không bị tắt khi dừng nhạc
+      const n = A.ctx.sampleRate, buf = A.ctx.createBuffer(1, n, n), ch = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) ch[i] = Math.random() * 2 - 1;
+      A.noise = buf;
+    }
+    if (A.ctx.state !== 'running') A.ctx.resume();
+    return A.ctx;
+  }
+
+  function env(g, w, peak, att, dec) {
+    g.gain.setValueAtTime(.0001, w);
+    g.gain.exponentialRampToValueAtTime(peak, w + att);
+    g.gain.exponentialRampToValueAtTime(.0001, w + att + dec);
+  }
+  function osc(dest, w, freq, type, peak, dec, att = .008) {
+    const o = A.ctx.createOscillator(), g = A.ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, w);
+    env(g, w, peak, att, dec);
+    o.connect(g); g.connect(dest);
+    o.start(w); o.stop(w + att + dec + .05);
+    return o;
+  }
+  function noise(dest, w, type, freq, peak, dec, q = 1) {
+    const s = A.ctx.createBufferSource(), f = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
+    s.buffer = A.noise; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    env(g, w, peak, .003, dec);
+    s.connect(f); f.connect(g); g.connect(dest);
+    s.start(w); s.stop(w + dec + .05);
+  }
+  const bell = (d, w, f, dur) => {
+    const dec = Math.min(1.6, dur + .4);
+    osc(d, w, f, 'sine', .30, dec); osc(d, w, f, 'triangle', .10, dec * .8);
+    osc(d, w, f * 2, 'sine', .07, dec * .4); osc(d, w, f * 4, 'sine', .03, .15);
+  };
+  const bass   = (d, w, f) => { osc(d, w, f, 'triangle', .32, .42); osc(d, w, f * 2, 'sine', .06, .2); };
+  const pad    = (d, w, fs, dur) => fs.forEach(f => osc(d, w, f, 'triangle', .035, dur, .06));
+  const kick   = (d, w) => { osc(d, w, 150, 'sine', .7, .24, .004).frequency.exponentialRampToValueAtTime(45, w + .14); };
+  const clap   = (d, w, loud) => [0, .011, .022].forEach(o => noise(d, w + o, 'bandpass', 1500, loud ? .4 : .14, loud ? .14 : .08, .9));
+  const shaker = (d, w, acc) => noise(d, w, 'highpass', 7000, acc ? .05 : .025, .045);
+  const tick   = (d, w) => { osc(d, w, 1250, 'sine', .28, .06, .002); osc(d, w, 830, 'triangle', .12, .05, .002); };
+  const crash  = (d, w) => noise(d, w, 'highpass', 4500, .12, 1.6, .5);
+  const boing  = (d, w) => {
+    const o = osc(d, w, 240, 'sine', .35, .42, .01);
+    o.frequency.exponentialRampToValueAtTime(820, w + .16);
+    o.frequency.exponentialRampToValueAtTime(480, w + .38);
+  };
+
+  // Dựng sẵn toàn bộ sự kiện của bài; bộ lập lịch chỉ đẩy dần vào AudioContext
+  const events = [];
+  const at = (t, fn) => events.push({ t, fn });
+  lines.forEach(L => {
+    L.syl.forEach(s => {
+      if (s.note === 'clap') at(s.t, (d, w) => clap(d, w, true));
+      else if (s.note === 'tick') at(s.t, (d, w) => tick(d, w));
+      else at(s.t, (d, w) => bell(d, w, NOTE[s.note], s.d));
+    });
+    L.chords.split(' ').forEach((c, b) => {
+      const t = L.start + b * BEAT, C = CHORD[c];
+      at(t, (d, w) => bass(d, w, C.bass[b % 2]));
+      if (b % 2 === 0) at(t, (d, w) => pad(d, w, C.pad, BEAT * 2));
+      if (L.soft) return;                                // câu nhẹ: chỉ bass + pad, không trống
+      if (b % 2 === 0) at(t, (d, w) => kick(d, w));
+      else at(t, (d, w) => clap(d, w, false));
+    });
+    const STEP = Math.round(BEAT / E);                   // móc đơn mỗi phách: 6/8 → 3, 4/4 → 2
+    const SUB = L.rush ? 2 : 1;                          // rush = câu "nhanh": tiếng lắc dồn gấp đôi
+    if (!L.soft) for (let e = 0; e < L.len * SUB; e++) at(L.start + e * E / SUB, (d, w) => shaker(d, w, e % (STEP * SUB) === 0));
+  });
+  const TAIL = cursor * E;
+  const SOFT_END = lines[lines.length - 1].soft;         // bài kết bằng câu nhẹ thì hợp âm cuối cũng dịu
+  at(TAIL, (d, w) => {
+    if (!SOFT_END) { kick(d, w); crash(d, w); }
+    pad(d, w, CHORD.C.pad, 2.2);
+    [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6].forEach(f => bell(d, w, f, 1.6));
+  });
+  events.sort((a, b) => a.t - b.t);
+  const SONG_END = TAIL + 2.2;
+
+  /* ================= TRẠNG THÁI PHÁT ================= */
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), world = $('world');
+  let state = 'idle', startAt = 0, pausedAt = 0, nextEv = 0;
+
+  const songTime = () => state === 'playing' ? Math.max(0, A.ctx.currentTime - startAt) : pausedAt;
+
+  function pump() {
+    if (state !== 'playing') return;
+    const now = A.ctx.currentTime - startAt;
+    while (nextEv < events.length && events[nextEv].t < now + .3) {
+      const ev = events[nextEv++];
+      if (ev.t >= now - .05) ev.fn(A.bus, startAt + ev.t);   // bỏ nốt đã trễ (tab bị ngủ)
+    }
+  }
+  setInterval(pump, 50);
+
+  function fadeOut(bus) {
+    if (!bus) return;
+    bus.gain.setTargetAtTime(0, A.ctx.currentTime, .03);
+    setTimeout(() => bus.disconnect(), 300);
+  }
+
+  function play(from) {
+    const c = ensureAudio();
+    if (!c) return;
+    fadeOut(A.bus);
+    A.bus = c.createGain(); A.bus.connect(A.out);
+    startAt = c.currentTime + .08 - from;
+    nextEv = events.findIndex(e => e.t >= from - .001);
+    if (nextEv < 0) nextEv = events.length;
+    state = 'playing';
+    resyncBeat(from);
+    syncUi();
+    pump();
+  }
+  function pause() {
+    pausedAt = songTime();
+    state = 'paused';
+    fadeOut(A.bus); A.bus = null;
+    syncUi();
+  }
+  function finish() {
+    pausedAt = SONG_END;
+    state = 'ended';
+    syncUi();
+  }
+  /* ================= CHẾ ĐỘ NGANG / DỌC ================= */
+  const MODE_KEY = 'lazysongs-display-mode';
+  const isTouch = matchMedia('(pointer: coarse)').matches;
+  const isPortraitScreen = () => matchMedia('(orientation: portrait)').matches;
+  let mode = 'land';
+  try { if (localStorage.getItem(MODE_KEY) === 'port') mode = 'port'; } catch {}
+  const ICON_PORT = 'M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 3v14h8V5z';
+  const ICON_LAND = 'M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm3 0v8h14V8z';
+  function applyMode() {
+    document.documentElement.classList.toggle('port', mode === 'port');
+    document.documentElement.classList.toggle('land', mode === 'land');
+    $('modeIcon').innerHTML = `<path d="${mode === 'port' ? ICON_LAND : ICON_PORT}"/>`;   // icon = chế độ sẽ chuyển sang
+  }
+  function lockOrientation() {
+    try { screen.orientation.lock(mode === 'port' ? 'portrait' : 'landscape').catch(() => {}); } catch {}
+  }
+  // Điện thoại/máy tính bảng: khi bắt đầu hát thì vào toàn màn hình và khoá hướng (Android);
+  // iPhone không hỗ trợ thì CSS tự xoay sân khấu.
+  function enterImmersive() {
+    if (!isTouch) return;
+    const d = document, el = d.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (d.fullscreenElement || d.webkitFullscreenElement || !req) { lockOrientation(); return; }
+    try { Promise.resolve(req.call(el)).then(lockOrientation, () => {}); } catch {}
+  }
+  function setMode(m) {
+    mode = m;
+    try { localStorage.setItem(MODE_KEY, m); } catch {}
+    applyMode();
+    if (document.fullscreenElement || document.webkitFullscreenElement) lockOrientation();
+  }
+
+  // Camera: viewBox luôn khớp đúng tỷ lệ sân khấu nên không có viền trống, và mặt đất
+  // (GROUND_Y, gồm cả chân nhân vật) luôn nằm ngay trên mép thanh lời — lời 1 dòng hay 2 dòng
+  // đều không che nhân vật, không cần chỉnh tay từng bài.
+  // Ngang: thấy trọn trời (y=0) tới mặt đất; thừa bề ngang thì mở rộng hai bên,
+  //        thiếu (màn vuông hơn 16:9) thì giữ rộng 1280 và mở thêm trời phía trên.
+  // Dọc: khung hẹp 520 đơn vị, trượt theo nhân vật.
+  const GROUND_Y = 590;                                // dưới chân nhân vật lớn nhất (thân 470 + chân ~115)
+  const cam = { x: 640, ground: .8 };
+  function updateCamera(dt) {
+    const a = stage.clientWidth / Math.max(1, stage.clientHeight);
+    const g = Math.max(.55, Math.min(.92, lyricsEl.offsetTop / stage.clientHeight));
+    cam.ground += (g - cam.ground) * (1 - Math.exp(-dt * 4));
+    let W, H, x0, y0;
+    if (mode === 'port') {
+      W = 520; H = W / a;
+      cam.x += (disp.x - cam.x) * (1 - Math.exp(-dt * 3));
+      x0 = Math.max(0, Math.min(1280 - W, cam.x - W / 2));
+      y0 = GROUND_Y - cam.ground * H;
+    } else {
+      H = GROUND_Y / cam.ground; W = H * a;
+      if (W >= 1280) { x0 = 640 - W / 2; y0 = 0; }
+      else { W = 1280; H = W / a; x0 = 0; y0 = GROUND_Y - cam.ground * H; }
+    }
+    world.setAttribute('viewBox', `${x0.toFixed(1)} ${y0.toFixed(1)} ${W.toFixed(1)} ${H.toFixed(1)}`);
+  }
+
+  function toggle() {
+    if (state !== 'playing') enterImmersive();
+    if (state === 'playing') pause();
+    else play(state === 'paused' ? pausedAt : 0);
+  }
+  function jump(dir) {
+    const t = state === 'idle' ? 0 : songTime();
+    let target;
+    if (dir > 0) target = sceneStarts.find(s => s > t + .05);
+    else {
+      const past = sceneStarts.filter(s => s <= t - 1.2);
+      target = past.length ? past[past.length - 1] : 0;
+    }
+    if (target !== undefined) play(target);
+  }
+
+  // Khởi động lại animation theo phách (hoa, mặt trời, nhà...) để khớp nhịp nhạc
+  function resyncBeat(from) {
+    stage.style.setProperty('--sync', `${-(from % (BEAT * 2)).toFixed(3)}s`);
+    stage.classList.add('resync');
+    void stage.offsetWidth;
+    stage.classList.remove('resync');
+  }
+
+  const PLAY_PATH = 'M7 4.5v15l12.5-7.5z';
+  const PAUSE_PATH = 'M6 4.5h4.5v15H6zm7.5 0H18v15h-4.5z';
+  const REPLAY_PATH = 'M12 5V1.5L7 6.5l5 5V8a5 5 0 1 1-5 5H4.5A7.5 7.5 0 1 0 12 5z';
+  function syncUi() {
+    const playing = state === 'playing';
+    $('playIcon').innerHTML = `<path d="${playing ? PAUSE_PATH : PLAY_PATH}"/>`;
+    stage.classList.toggle('paused', state === 'paused');
+    $('overlay').hidden = playing;
+    $('overlayIcon').innerHTML = `<path d="${state === 'ended' ? REPLAY_PATH : PLAY_PATH}"/>`;
+    $('overlayLabel').textContent =
+      state === 'ended' ? 'Hát lại nào!' : state === 'paused' ? 'Hát tiếp nào!' : START_LABEL;
+  }
+
+  /* ================= CẢNH + LỜI KARAOKE ================= */
+  const lyricsEl = $('lyrics'), rowsEl = $('rows'), ball = $('ball'), title = $('title'), cue = $('cue');
+  let curLine = -1, curScene = '';
+
+  function lineIndexAt(t) {
+    let i = 0;
+    for (let k = 0; k < lines.length; k++) if (t >= lines[k].show) i = k;
+    return i;
+  }
+
+  function showLine(li) {
+    curLine = li;
+    const L = lines[li];
+    if (L.scene !== curScene) {
+      curScene = L.scene;
+      world.dataset.scene = L.scene;
+      $('cueIcon').textContent = SCENES[L.scene].icon;
+      $('cueText').textContent = SCENES[L.scene].text;
+      cue.classList.remove('pop'); void cue.offsetWidth; cue.classList.add('pop');
+      if (TITLES[L.scene]) title.innerHTML = TITLES[L.scene];
+      title.classList.toggle('show', !!TITLES[L.scene]);
+    }
+    rowsEl.innerHTML = '';
+    let row = document.createElement('div');
+    row.className = 'row';
+    rowsEl.appendChild(row);
+    let prevJoined = false;
+    L.els = L.syl.map(s => {
+      if (s.br) {
+        row = document.createElement('div');
+        row.className = 'row';
+        rowsEl.appendChild(row);
+      }
+      const span = document.createElement('span');
+      span.className = 'syl';
+      // chữ kết thúc bằng "-" = nối với âm tiết sau thành một từ (lời tiếng Anh: "Twin-", "kle,")
+      const joined = s.text.endsWith('-');
+      span.textContent = joined ? s.text.slice(0, -1) : s.text;
+      span.classList.toggle('join', joined);
+      span.classList.toggle('cont', prevJoined && !s.br);
+      prevJoined = joined;
+      row.appendChild(span);
+      return span;
+    });
+  }
+
+  function drawLyrics(L, t, clock) {
+    let idx = -1;
+    L.syl.forEach((s, i) => { if (t >= s.t) idx = i; });
+    L.els.forEach((el, i) => {
+      el.classList.toggle('done', i < idx);
+      el.classList.toggle('on', i === idx);
+    });
+    // quả bóng nhân vật nhảy từ chữ đang hát sang chữ kế tiếp, chạm đúng lúc chữ đó bắt đầu
+    const c = i => ({ x: L.els[i].offsetLeft + L.els[i].offsetWidth / 2, y: L.els[i].offsetTop });
+    const h = Math.min(stage.clientWidth, stage.clientHeight * 16 / 9) * (mode === 'port' ? .05 : .028);
+    let x, y;
+    if (idx < 0) {
+      const p = c(0);
+      x = p.x; y = p.y - Math.abs(Math.sin(Math.PI * clock / BEAT)) * h * .5;
+    } else {
+      const s = L.syl[idx], q = Math.min(1, (t - s.t) / s.d);
+      const a = c(idx), b = idx + 1 < L.els.length ? c(idx + 1) : a;
+      x = a.x + (b.x - a.x) * q;
+      y = a.y + (b.y - a.y) * q - Math.sin(Math.PI * q) * h;
+    }
+    ball.style.transform = `translate(${x}px, ${y}px)`;
+  }
+
+  /* ================= THỎ CON + BẠN RÙA ================= */
+  const bunny = $('bunny'), torso = $('torso'), upper = $('upper'), armL = $('armL'), armR = $('armR');
+  const earL = $('earL'), earR = $('earR'), footL = $('footL'), footR = $('footR'), shadow = $('shadow');
+  const turtle = $('turtle'), turtleBody = $('turtleBody'), tLegsA = $('tLegsA'), tLegsB = $('tLegsB'), speed = $('speed');
+  const bubble = $('bubble'), bubbleIn = $('bubbleIn'), bubbleText = $('bubbleText');
+  const FEET_Y = 548;
+  const disp = { x: 640, bx: 640, s: 1, sx: 1, sy: 1, armL: 25, armR: 25, ear: 0, tx: 900 };   // disp.x = tâm camera dọc, disp.bx = chỗ Thỏ đứng
+  let poke = 0, pokeMood = 0;
+
+  const clamp01 = x => Math.max(0, Math.min(1, x));
+  const easeIO = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+
+  // lb = số phách từ đầu câu, bp = phách tổng. Tay/tai: góc dang ra ngoài (độ), 0 = buông thẳng.
+  function bunnyPose(scene, lb, bp, clock) {
+    const ph = bp - Math.floor(bp), hop = Math.sin(Math.PI * ph), sway = Math.sin(Math.PI * bp / 2);
+    const P = { x: 640, s: 1, sx: 1, sy: 1, lift: hop * 14, r: sway * 4, armL: 25, armR: 25, ear: sway * 6,
+                mood: 'smile', run: 0, dir: 1, tx: 900, cam: null };
+    switch (scene) {
+      case 'intro': P.armR = 150 + Math.sin(clock * 9) * 18; P.mood = 'happy'; break;
+      case 'high': {                                     // mỗi tiếng "cao" vươn thêm một nấc, như nốt nhạc đi lên
+        const k = Math.min(4, Math.max(0, lb - 1.8)) / 4;
+        P.sy = 1 + .5 * k; P.sx = 1 - .1 * k; P.armL = P.armR = 25 + 145 * k;
+        P.lift = 8 * k + hop * 8; P.r = sway * 2; P.ear = sway * 3; P.mood = 'grin'; break;
+      }
+      case 'low': {                                      // mỗi tiếng "thấp" thụp xuống một nấc
+        const k = Math.min(3, Math.max(0, lb - 1.8)) / 3;
+        P.sy = 1 - .45 * k; P.sx = 1 + .18 * k; P.armL = P.armR = 25 + 35 * k;
+        P.lift = hop * 10 * (1 - k); P.ear = 10 + 45 * k; P.mood = 'grin'; break;
+      }
+      case 'big': {                                      // "to" lần 1 phồng, "to" lần 2 phồng nữa
+        const k1 = easeIO(clamp01((lb - 1.8) / .7)), k2 = easeIO(clamp01((lb - 3.8) / .7));
+        P.s = 1 + .3 * k1 + .3 * k2; P.sx = 1 + .1 * (k1 + k2) / 2;
+        P.armL = P.armR = 25 + 75 * Math.max(k1, k2); P.lift = hop * 6;
+        P.mood = (lb > 1.8 && lb < 2.8) || (lb > 3.8 && lb < 4.8) ? 'wow' : 'grin'; break;
+      }
+      case 'tiny': {                                     // co lại bé tí, ngạc nhiên tròn mắt
+        const k = easeIO(clamp01((lb - 1.8) / 2.2));
+        P.s = 1 - .68 * k; P.armL = P.armR = 25 + 120 * k; P.lift = hop * 16;
+        P.mood = lb > 1.8 ? 'wow' : 'smile'; break;
+      }
+      case 'fast': {                                     // chạy vù qua lại, đổi hướng mỗi phách
+        P.x = 640 + 190 * Math.sin(Math.PI * lb); P.cam = 640;   // camera đứng yên, Thỏ chạy trong khung
+        P.dir = Math.cos(Math.PI * lb) >= 0 ? 1 : -1;
+        P.run = clock * 18; P.r = 12;
+        P.armL = 55 + 45 * Math.sin(P.run); P.armR = 55 - 45 * Math.sin(P.run);
+        P.lift = Math.abs(Math.sin(P.run)) * 12; P.ear = -28; P.mood = 'grin'; break;
+      }
+      case 'slow': {                                     // đi thật chậm cạnh bạn Rùa
+        const step = Math.PI * lb / 4;
+        P.x = 520 + 160 * clamp01(lb / 12); P.tx = P.x + 170; P.cam = P.x + 85;   // khung giữa Thỏ và Rùa
+        P.lift = Math.abs(Math.sin(step)) * 8; P.r = Math.sin(step) * 5;
+        P.armL = 30 + Math.sin(step) * 12; P.armR = 30 - Math.sin(step) * 12; P.ear = 22;
+        P.run = step; P.mood = lb > 9 ? 'sleep' : 'smile'; break;
+      }
+      case 'dance': P.lift = hop * 34; P.r = sway * 10; P.armL = P.armR = 90 + 60 * hop; P.mood = 'happy'; P.tx = 830; P.cam = 700; break;
+      case 'end': P.lift = hop * 26; P.armL = P.armR = 160; P.mood = 'happy'; P.tx = 830; P.cam = 700; break;
+    }
+    return P;
+  }
+
+  function drawChars(L, t, clock, dt) {
+    const lb = Math.max(0, (t - L.start) / BEAT), bp = clock / BEAT;
+    const P = bunnyPose(L.scene, lb, bp, clock);
+    const k = 1 - Math.exp(-dt * 10), kx = L.scene === 'fast' ? 1 - Math.exp(-dt * 30) : 1 - Math.exp(-dt * 5);
+    disp.bx += (P.x - disp.bx) * kx; disp.x += ((P.cam ?? P.x) - disp.x) * (1 - Math.exp(-dt * 5)); disp.tx += (P.tx - disp.tx) * (1 - Math.exp(-dt * 3));
+    for (const key of ['s', 'sx', 'sy', 'armL', 'armR', 'ear']) disp[key] += (P[key] - disp[key]) * k;
+
+    let lift = P.lift, r = P.r * P.dir;
+    if (poke > 0) { lift += Math.sin(Math.PI * (1 - poke)) * 90; r += 360 * (1 - poke); poke = Math.max(0, poke - dt * 2); }
+    if (pokeMood > 0) pokeMood -= dt;
+    const y = FEET_Y - lift * disp.s;
+    bunny.setAttribute('transform', `translate(${disp.bx.toFixed(1)} ${y.toFixed(1)}) rotate(${r.toFixed(1)}) scale(${(disp.s * P.dir).toFixed(3)} ${disp.s.toFixed(3)})`);
+    torso.setAttribute('transform', `translate(0 -10) scale(${disp.sx.toFixed(3)} ${disp.sy.toFixed(3)}) translate(0 10)`);
+    upper.setAttribute('transform', `translate(0 ${((1 - disp.sy) * 118).toFixed(1)})`);
+    armL.setAttribute('transform', `rotate(${disp.armL.toFixed(1)})`);
+    armR.setAttribute('transform', `rotate(${(-disp.armR).toFixed(1)})`);
+    earL.setAttribute('transform', `rotate(${(-disp.ear).toFixed(1)})`);
+    earR.setAttribute('transform', `rotate(${disp.ear.toFixed(1)})`);
+    const step = P.run ? Math.sin(P.run) : 0;
+    footL.setAttribute('transform', `translate(0 ${(-Math.max(0, step) * 12).toFixed(1)})`);
+    footR.setAttribute('transform', `translate(0 ${(-Math.max(0, -step) * 12).toFixed(1)})`);
+    bunny.dataset.mood = pokeMood > 0 ? 'happy' : P.mood;
+
+    const near = clamp01(1 - lift * disp.s / 160);
+    shadow.setAttribute('cx', disp.bx.toFixed(1));
+    shadow.setAttribute('rx', (66 * disp.s * (.5 + .5 * near)).toFixed(1));
+    speed.setAttribute('transform', `translate(${disp.bx.toFixed(1)} ${FEET_Y}) scale(${P.dir} 1)`);
+
+    // bạn Rùa bò chậm: chân thay nhau nhấc, mai nhún nhẹ
+    const tStep = L.scene === 'slow' ? Math.sin(Math.PI * lb / 2) : Math.sin(Math.PI * bp) * .4;
+    turtle.setAttribute('transform', `translate(${disp.tx.toFixed(1)} ${FEET_Y})`);
+    turtleBody.setAttribute('transform', `translate(0 ${(-Math.abs(tStep) * 4).toFixed(1)})`);
+    tLegsA.setAttribute('transform', `translate(0 ${(-Math.max(0, tStep) * 8).toFixed(1)})`);
+    tLegsB.setAttribute('transform', `translate(0 ${(-Math.max(0, -tStep) * 8).toFixed(1)})`);
+
+    if (pokeMood > 0) bubble.setAttribute('transform', `translate(${(disp.bx + 50 * disp.s).toFixed(1)} ${(y - 230 * disp.s).toFixed(1)})`);
+    bubbleIn.classList.toggle('show', pokeMood > 0);
+  }
+
+  // chạm Thỏ: nhảy lộn vòng "Hihi!"
+  $('bunnyHit').addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    const c = ensureAudio(); if (c) boing(A.fx, c.currentTime + .01);
+    poke = 1; pokeMood = .9; bubbleText.textContent = 'Hihi!';
+  });
+
+  /* ================= TRANG TRÍ SINH BẰNG JS ================= */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs, parent) => {
+    const el = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    parent.appendChild(el);
+    return el;
+  };
+  const FLOWER_COLORS = ['#FF7AB6', '#B98CFF', '#FF9F43', '#4FB3FF', '#FF5A5A'];
+  [-560, -420, -280, -130, 30, 180, 330, 950, 1120, 1260, 1420, 1580, 1760].forEach((x, i) => {
+    const at = mk('g', { transform: `translate(${x} ${566 + (i % 3) * 14}) scale(${(.9 + (i % 2) * .25).toFixed(2)})` }, $('flowers'));
+    const sw = mk('g', { class: 'fl' }, at);
+    sw.style.animationDelay = `${-(i * .53 % 3).toFixed(2)}s`;
+    mk('use', { href: '#flower', x: -30, y: -80, width: 60, height: 90, color: FLOWER_COLORS[i % 5] }, sw);
+  });
+  const CONFETTI = ['#FF5A8A', '#FFD23F', '#4FB3FF', '#5BD66B', '#B98CFF', '#FF9F43'];
+  for (let i = 0; i < 46; i++) {                          // kim tuyến rơi khi kết bài
+    const at = mk('g', { transform: `translate(${-300 + (i * 173) % 1880} ${-260 - (i * 61) % 300})` }, $('confetti'));
+    const c = mk('rect', { x: -7, y: -4, width: 14, height: 8, rx: 2, fill: CONFETTI[i % 6] }, at);
+    c.style.animation = `confetti ${(3 + (i % 4) * .6).toFixed(1)}s linear ${-((i * .37) % 3).toFixed(2)}s infinite`;
+  }
+
+  /* ================= TƯƠNG TÁC ================= */
+  const PENTA = [1046.5, 1174.66, 1318.51, 1567.98, 1760];
+  const SPARKS = ['⭐', '💖', '🌟', '✨', '🎵', '🌈'];
+
+  stage.addEventListener('pointerdown', e => {
+    if (e.target.closest('button, a')) return;
+    const c = ensureAudio();
+    if (c) bell(A.fx, c.currentTime + .01, PENTA[Math.floor(Math.random() * PENTA.length)], .3);
+    const r = stage.getBoundingClientRect();
+    const sp = document.createElement('span');
+    sp.className = 'sparkle';
+    sp.textContent = SPARKS[Math.floor(Math.random() * SPARKS.length)];
+    // sân khấu đang xoay 90° (chế độ ngang trên màn dọc) → đổi toạ độ chạm về hệ của sân khấu
+    const turned = mode === 'land' && isPortraitScreen();
+    sp.style.left = `${turned ? e.clientY - r.top : e.clientX - r.left}px`;
+    sp.style.top = `${turned ? r.right - e.clientX : e.clientY - r.top}px`;
+    sp.addEventListener('animationend', () => sp.remove());
+    stage.appendChild(sp);
+  });
+
+  $('overlay').addEventListener('click', toggle);
+  $('btnPlay').addEventListener('click', toggle);
+  $('btnPrev').addEventListener('click', () => jump(-1));
+  $('btnNext').addEventListener('click', () => jump(1));
+  $('btnFull').addEventListener('click', toggleFull);
+  $('btnMode').addEventListener('click', () => setMode(mode === 'port' ? 'land' : 'port'));
+  $('btnGuide').addEventListener('click', () => $('guide').showModal());
+  $('guideClose').addEventListener('click', () => $('guide').close());
+
+  function toggleFull() {
+    const d = document, el = d.documentElement;
+    if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    else (el.requestFullscreen || el.webkitRequestFullscreen || (() => {})).call(el);
+  }
+
+  document.addEventListener('keydown', e => {
+    if ($('guide').open) return;
+    if (e.code === 'Space') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') jump(1);
+    else if (e.key === 'ArrowLeft') jump(-1);
+    else if (e.key === 'f' || e.key === 'F') toggleFull();
+  });
+
+  /* ================= CHẤT LIỆU GIẤY ================= */
+  // Hạt giấy + vài sợi xơ, tạo một lần (không tốn CPU mỗi khung hình)
+  (() => {
+    const N = 200, c = document.createElement('canvas');
+    c.width = c.height = N;
+    const x = c.getContext('2d'), img = x.createImageData(N, N);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = 205 + Math.random() * 50;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    x.strokeStyle = 'rgba(120,100,80,.18)'; x.lineWidth = .7;
+    for (let i = 0; i < 26; i++) {
+      const a = Math.random() * N, b = Math.random() * N, l = 6 + Math.random() * 14, r = Math.random() * Math.PI;
+      x.beginPath(); x.moveTo(a, b); x.lineTo(a + Math.cos(r) * l, b + Math.sin(r) * l); x.stroke();
+    }
+    $('grain').style.backgroundImage = `url(${c.toDataURL()})`;
+  })();
+
+  /* ================= VÒNG LẶP KHUNG HÌNH ================= */
+  let lastTs = 0;
+  function frame(ts) {
+    const dt = Math.min(.1, (ts - lastTs) / 1000 || 0);
+    lastTs = ts;
+    pump();
+    if (state === 'playing' && songTime() >= SONG_END) finish();
+    const t = songTime();
+    const li = state === 'idle' ? 0 : lineIndexAt(t);
+    if (li !== curLine) showLine(li);
+    const L = lines[li];
+    const clock = state === 'playing' ? t : ts / 1000;   // khi dừng, nhân vật vẫn nhún tại chỗ
+    drawLyrics(L, state === 'idle' ? -1 : t, clock);
+    drawChars(L, t, clock, dt);
+    updateCamera(dt);
+    requestAnimationFrame(frame);
+  }
+  applyMode();
+  syncUi();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
